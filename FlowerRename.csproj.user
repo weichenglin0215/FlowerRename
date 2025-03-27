@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Compile Update="Controls\RulePanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="Form_FlowerRename.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Rules\GroupRule.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Rules\InsertRule.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Rules\NumberingRule.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Rules\ReplaceRule.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Rules\RuleBase.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+  </ItemGroup>
+</Project>

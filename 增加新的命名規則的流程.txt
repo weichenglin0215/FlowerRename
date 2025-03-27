@@ -1,0 +1,96 @@
+1. 先判斷新的規則在介面上與原有的哪一個規則最相符，例如：要添加GroupRule，跟NumberingRule很相近
+2. 複製NumberingRule.cs NumberingRule.Designer.cs NumberingRule.resx
+3. 將檔名改成GroupRule開頭
+4. 將程式碼NumberingRule.cs NumberingRule.Designer.cs 中 NumberingRule 改成 GroupRule
+5. Form_FlowerRename.cs，private void comboBoxAddRule_SelectedIndexChanged(object sender, EventArgs e)，添加新的case，XXXRule換成GroupRule ，記住不適只有GroupRuleControl, 還有GroupRule 
+
+                case "群組化(AI產圖方便比對)":
+                    var GroupRuleControl = new GroupRuleControl();
+                    GroupRuleControl.RuleID = RuleID;
+                    Debug.WriteLine("Add GroupRuleControl RuleID = " + RuleID);
+                    GroupRuleControl.Dock = DockStyle.Top; // 設置停靠方式
+                    ruleContainer.Controls.Add(GroupRuleControl); // 將控制項添加到Form_FlowerRename容器中
+                    GroupRuleControl._Form_FlowerRename = this;
+                    //將新增的numberingRuleControl在ruleContainer的位置移到最上方
+                    ruleContainer.Controls.SetChildIndex(GroupRuleControl, 0);
+                    GroupRuleControl.Focus();                    // 創建 RuleManager 中的 NumberingRule
+                    var GroupRule = new GroupRule(GroupRuleControl);
+                    _ruleManager.AddRuleControlPair(GroupRule, GroupRuleControl, RuleID); // 添加或更新規則
+                    RuleID++;
+                    break; 
+6.Form_FlowerRename.cs[設計]，comboBoxAddRule 編輯項目增加"群組化(AI產圖方便比對)"，
+注意：要跟Form_FlowerRename.cs private void comboBoxAddRule_SelectedIndexChanged(object sender, EventArgs e) case "群組化(AI產圖方便比對)":要完全相同，不然就無法開啟介面。
+7.RuleManager.cs public void AddRuleControlPair(IRenameRule rule, UserControl ruleControl, int RuleID) 增加
+            else if (ruleControl is GroupRuleControl GroupRuleControl)
+            {
+                GroupRuleControl.BaseFileNameChanged += (GroupFileName, startNumber, incNumber, padding) =>
+                {
+                    RefreshForm_FlowerRename_FileList(); //更新計算並更新主介面的新舊檔名。
+                };
+            }
+
+8. GroupRule.cs(只是舉例，要以新規則檔案)好像也可以不用改
+BaseFileNameChanged 改成 GroupFileNameChanged 
+
+確認編譯無誤之後，再開始添加新規則內容
+GroupRule.cs[設計]添加 groupAmountUpDown
+GroupRule.cs
+public event Action<string, int, int, int, int> GroupFileNameChanged;
+
+    public class GroupRule : IRenameRule
+    {
+        private GroupRuleControl _ruleControl;
+        private string _GroupFileName;
+        private int _startNumber;
+        private int _incNumber;
+        private int _padding;
+        private int _groupAmount;
+
+        public GroupRule(GroupRuleControl ruleControl)
+        {
+            _ruleControl = ruleControl;
+            _GroupFileName = _ruleControl.GroupFileNameTextBox.Text;
+            _startNumber = (int)_ruleControl.startNumberNumericUpDown.Value;
+            _incNumber = (int)_ruleControl.incNumberNumericUpDown.Value;
+            _padding = (int)_ruleControl.paddingNumericUpDown.Value;
+            _groupAmount = (int)_ruleControl.groupAmountUpDown.Value;
+        }
+
+        public GroupRuleControl()
+        {
+            InitializeComponent();
+            GroupFileNameTextBox.TextChanged += (s, e) =>
+            {
+                GroupFileNameChanged?.Invoke(GroupFileNameTextBox.Text, (int)startNumberNumericUpDown.Value, (int)incNumberNumericUpDown.Value, (int)paddingNumericUpDown.Value, (int)groupAmountUpDown.Value);
+            };
+            startNumberNumericUpDown.ValueChanged += (s, e) =>
+            {
+                GroupFileNameChanged?.Invoke(GroupFileNameTextBox.Text, (int)startNumberNumericUpDown.Value, (int)incNumberNumericUpDown.Value, (int)paddingNumericUpDown.Value, (int)groupAmountUpDown.Value);
+            };
+            incNumberNumericUpDown.ValueChanged += (s, e) =>
+            {
+                GroupFileNameChanged?.Invoke(GroupFileNameTextBox.Text, (int)startNumberNumericUpDown.Value, (int)incNumberNumericUpDown.Value, (int)paddingNumericUpDown.Value, (int)groupAmountUpDown.Value);
+            };
+            paddingNumericUpDown.ValueChanged += (s, e) =>
+            {
+                GroupFileNameChanged?.Invoke(GroupFileNameTextBox.Text, (int)startNumberNumericUpDown.Value, (int)incNumberNumericUpDown.Value, (int)paddingNumericUpDown.Value, (int)groupAmountUpDown.Value);
+            };
+            groupAmountUpDown.ValueChanged += (s, e) =>
+            {
+                GroupFileNameChanged?.Invoke(GroupFileNameTextBox.Text, (int)startNumberNumericUpDown.Value, (int)incNumberNumericUpDown.Value, (int)paddingNumericUpDown.Value, (int)groupAmountUpDown.Value);
+            };
+        }
+
+
+
+
+
+RuleManager.cs
+            else if (ruleControl is GroupRuleControl GroupRuleControl)
+            {
+                GroupRuleControl.GroupFileNameChanged += (GroupFileName, startNumber, incNumber, padding, groupAmount) =>
+                {
+                    RefreshForm_FlowerRename_FileList(); //更新計算並更新主介面的新舊檔名。
+
+                };
+            }
