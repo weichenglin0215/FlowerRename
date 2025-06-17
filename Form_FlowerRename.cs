@@ -86,7 +86,7 @@ namespace FlowerRename
                         string originalFileName = fileInfo.Name; // 原有檔名
                         string newFileName = originalFileName; // 新檔名（可以根據需要修改）
                         string fileSize = fileInfo.Length.ToString(); // 檔案大小
-                        string fileDate = fileInfo.LastWriteTime.ToString(); // 檔案日期
+                        string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss"); // 檔案日期
                         string fileDirectory = fileInfo.DirectoryName; // 檔案目錄
 
                         // 創建 ListViewItem 並添加到 fileListView
@@ -133,7 +133,7 @@ namespace FlowerRename
                         string originalFileName = fileInfo.Name;
                         string newFileName = originalFileName; // 可以根據需要修改
                         string fileSize = fileInfo.Length.ToString();
-                        string fileDate = fileInfo.LastWriteTime.ToString();
+                        string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
                         string fileDirectory = fileInfo.DirectoryName;
 
                         ListViewItem item = new ListViewItem(originalFileName);
@@ -177,7 +177,7 @@ namespace FlowerRename
                         string originalFileName = fileInfo.Name;
                         string newFileName = originalFileName; // 可以根據需要修改
                         string fileSize = fileInfo.Length.ToString();
-                        string fileDate = fileInfo.LastWriteTime.ToString();
+                        string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
                         string fileDirectory = fileInfo.DirectoryName;
 
                         // 檢查檔案是否已存在
@@ -216,7 +216,7 @@ namespace FlowerRename
                         string originalFileName = fileInfo.Name;
                         string newFileName = originalFileName; // 可以根據需要修改
                         string fileSize = fileInfo.Length.ToString();
-                        string fileDate = fileInfo.LastWriteTime.ToString();
+                        string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
                         string fileDirectory = fileInfo.DirectoryName;
 
                         // 檢查檔案是否已存在

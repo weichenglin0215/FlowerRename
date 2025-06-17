@@ -102,7 +102,7 @@
             // 
             buttonRename.BackColor = Color.LightSeaGreen;
             buttonRename.Dock = DockStyle.Bottom;
-            buttonRename.Font = new Font("Microsoft JhengHei UI", 24F, FontStyle.Bold, GraphicsUnit.Point);
+            buttonRename.Font = new Font("Microsoft JhengHei UI", 24F, FontStyle.Bold);
             buttonRename.ForeColor = Color.White;
             buttonRename.Location = new Point(5, 696);
             buttonRename.Name = "buttonRename";
@@ -264,6 +264,7 @@
             ClientSize = new Size(1604, 761);
             Controls.Add(rightPanel);
             Controls.Add(ruleContainer);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form_FlowerRename";
             Text = "開心花更名";
             ruleContainer.ResumeLayout(false);
