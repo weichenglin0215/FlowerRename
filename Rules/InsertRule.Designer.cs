@@ -47,6 +47,7 @@ namespace FlowerRename
             startInsertNumberNumericUpDown.Name = "startInsertNumberNumericUpDown";
             startInsertNumberNumericUpDown.Size = new Size(80, 28);
             startInsertNumberNumericUpDown.TabIndex = 0;
+            startInsertNumberNumericUpDown.TextAlign = HorizontalAlignment.Right;
             // 
             // label1
             // 
@@ -147,6 +148,7 @@ namespace FlowerRename
             incNumberNumericUpDown.Name = "incNumberNumericUpDown";
             incNumberNumericUpDown.Size = new Size(80, 28);
             incNumberNumericUpDown.TabIndex = 18;
+            incNumberNumericUpDown.TextAlign = HorizontalAlignment.Right;
             incNumberNumericUpDown.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // label5
@@ -175,6 +177,7 @@ namespace FlowerRename
             startNumberNumericUpDown.Name = "startNumberNumericUpDown";
             startNumberNumericUpDown.Size = new Size(80, 28);
             startNumberNumericUpDown.TabIndex = 14;
+            startNumberNumericUpDown.TextAlign = HorizontalAlignment.Right;
             startNumberNumericUpDown.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // paddingNumericUpDown
@@ -185,6 +188,7 @@ namespace FlowerRename
             paddingNumericUpDown.Name = "paddingNumericUpDown";
             paddingNumericUpDown.Size = new Size(80, 28);
             paddingNumericUpDown.TabIndex = 15;
+            paddingNumericUpDown.TextAlign = HorizontalAlignment.Right;
             paddingNumericUpDown.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // InsertRuleControl

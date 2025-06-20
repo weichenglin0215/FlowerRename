@@ -3,16 +3,40 @@
   "WorkspaceRootPath": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|c:\\3d_prj\\vs_2022_prj\\flowerrename\\form_flowerrename.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|solutionrelative:form_flowerrename.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|c:\\3d_prj\\vs_2022_prj\\flowerrename\\flowerrename.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
+      "RelativeMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|solutionrelative:flowerrename.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|C:\\3D_prj\\VS_2022_prj\\FlowerRename\\form_flowerrename.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
       "RelativeMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|solutionrelative:form_flowerrename.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|c:\\3d_prj\\vs_2022_prj\\flowerrename\\rules\\irenamerule.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|solutionrelative:rules\\irenamerule.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|c:\\3d_prj\\vs_2022_prj\\flowerrename\\rules\\rulebase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|solutionrelative:rules\\rulebase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|c:\\3d_prj\\vs_2022_prj\\flowerrename\\rules\\replacerule.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|solutionrelative:rules\\replacerule.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|c:\\3d_prj\\vs_2022_prj\\flowerrename\\rules\\numberingrule.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|solutionrelative:rules\\numberingrule.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|c:\\3d_prj\\vs_2022_prj\\flowerrename\\rules\\insertrule.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|solutionrelative:rules\\insertrule.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|C:\\3D_prj\\VS_2022_prj\\FlowerRename\\rules\\grouprule.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
       "RelativeMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|solutionrelative:rules\\grouprule.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|c:\\3d_prj\\vs_2022_prj\\flowerrename\\form_flowerrename.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|solutionrelative:form_flowerrename.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E7F95151-C648-423E-89E3-6B4F50BD00AB}|FlowerRename.csproj|c:\\3d_prj\\vs_2022_prj\\flowerrename\\rules\\grouprule.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -30,11 +54,96 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "FlowerRename",
+              "DocumentMoniker": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\FlowerRename.csproj",
+              "RelativeDocumentMoniker": "FlowerRename.csproj",
+              "ToolTip": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\FlowerRename.csproj",
+              "RelativeToolTip": "FlowerRename.csproj",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-06-20T01:22:49.371Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "RuleBase.cs [\u8A2D\u8A08]",
+              "DocumentMoniker": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Rules\\RuleBase.cs",
+              "RelativeDocumentMoniker": "Rules\\RuleBase.cs",
+              "ToolTip": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Rules\\RuleBase.cs [\u8A2D\u8A08]",
+              "RelativeToolTip": "Rules\\RuleBase.cs [\u8A2D\u8A08]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-20T01:20:52.252Z",
+              "EditorCaption": " [\u8A2D\u8A08]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "NumberingRule.cs [\u8A2D\u8A08]",
+              "DocumentMoniker": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Rules\\NumberingRule.cs",
+              "RelativeDocumentMoniker": "Rules\\NumberingRule.cs",
+              "ToolTip": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Rules\\NumberingRule.cs [\u8A2D\u8A08]",
+              "RelativeToolTip": "Rules\\NumberingRule.cs [\u8A2D\u8A08]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-20T01:19:59.479Z",
+              "EditorCaption": " [\u8A2D\u8A08]"
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 2,
+              "Title": "IRenameRule.cs",
+              "DocumentMoniker": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Rules\\IRenameRule.cs",
+              "RelativeDocumentMoniker": "Rules\\IRenameRule.cs",
+              "ToolTip": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Rules\\IRenameRule.cs",
+              "RelativeToolTip": "Rules\\IRenameRule.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-20T01:19:55.898Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "InsertRule.cs [\u8A2D\u8A08]",
+              "DocumentMoniker": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Rules\\InsertRule.cs",
+              "RelativeDocumentMoniker": "Rules\\InsertRule.cs",
+              "ToolTip": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Rules\\InsertRule.cs [\u8A2D\u8A08]",
+              "RelativeToolTip": "Rules\\InsertRule.cs [\u8A2D\u8A08]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-20T01:19:20.276Z",
+              "EditorCaption": " [\u8A2D\u8A08]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Form_FlowerRename.cs [\u8A2D\u8A08]",
+              "DocumentMoniker": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Form_FlowerRename.cs",
+              "RelativeDocumentMoniker": "Form_FlowerRename.cs",
+              "ToolTip": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Form_FlowerRename.cs [\u8A2D\u8A08]",
+              "RelativeToolTip": "Form_FlowerRename.cs [\u8A2D\u8A08]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-26T07:40:02.944Z",
+              "EditorCaption": " [\u8A2D\u8A08]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "ReplaceRule.cs [\u8A2D\u8A08]",
+              "DocumentMoniker": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Rules\\ReplaceRule.cs",
+              "RelativeDocumentMoniker": "Rules\\ReplaceRule.cs",
+              "ToolTip": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Rules\\ReplaceRule.cs [\u8A2D\u8A08]",
+              "RelativeToolTip": "Rules\\ReplaceRule.cs [\u8A2D\u8A08]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-20T01:20:34.771Z",
+              "EditorCaption": " [\u8A2D\u8A08]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
               "Title": "GroupRule.cs [\u8A2D\u8A08]",
               "DocumentMoniker": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Rules\\GroupRule.cs",
               "RelativeDocumentMoniker": "Rules\\GroupRule.cs",
@@ -46,7 +155,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 9,
               "Title": "GroupRule.cs",
               "DocumentMoniker": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Rules\\GroupRule.cs",
               "RelativeDocumentMoniker": "Rules\\GroupRule.cs",
@@ -59,7 +168,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 10,
               "Title": "RuleManager.cs",
               "DocumentMoniker": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Managers\\RuleManager.cs",
               "RelativeDocumentMoniker": "Managers\\RuleManager.cs",
@@ -71,28 +180,16 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 8,
               "Title": "Form_FlowerRename.cs",
               "DocumentMoniker": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Form_FlowerRename.cs",
               "RelativeDocumentMoniker": "Form_FlowerRename.cs",
-              "ToolTip": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Form_FlowerRename.cs*",
-              "RelativeToolTip": "Form_FlowerRename.cs*",
+              "ToolTip": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Form_FlowerRename.cs",
+              "RelativeToolTip": "Form_FlowerRename.cs",
               "ViewState": "AgIAAE0AAAAAAAAAAAAhwFgAAABJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-03-26T07:42:50.781Z",
               "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Form_FlowerRename.cs [\u8A2D\u8A08]",
-              "DocumentMoniker": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Form_FlowerRename.cs",
-              "RelativeDocumentMoniker": "Form_FlowerRename.cs",
-              "ToolTip": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\Form_FlowerRename.cs [\u8A2D\u8A08]*",
-              "RelativeToolTip": "Form_FlowerRename.cs [\u8A2D\u8A08]*",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-26T07:40:02.944Z",
-              "EditorCaption": " [\u8A2D\u8A08]"
             }
           ]
         }

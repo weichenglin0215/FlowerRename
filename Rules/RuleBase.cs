@@ -4,14 +4,14 @@ namespace FlowerRename
     {
         protected Panel ExpandedPanel;
         protected bool _isExpanded;
-        protected bool _isEnabled; 
+        protected bool _isEnabled;
         public abstract string RuleName { get; }
-        public bool IsExpanded 
-        { 
+        public bool IsExpanded
+        {
             get => _isExpanded;
             set => _isExpanded = value;
         }
-        public virtual bool IsEnabled 
+        public virtual bool IsEnabled
         {
             get => _isEnabled;
             set => _isEnabled = value;
@@ -28,7 +28,7 @@ namespace FlowerRename
                 Visible = false
             };
             _isExpanded = false;
-            _isEnabled = true; 
+            _isEnabled = true;
         }
 
         public virtual void ToggleExpand()
@@ -50,6 +50,12 @@ namespace FlowerRename
         public abstract string[] GenerateFileName(string[] originalFileNames);
         public abstract string ProcessFileName(string originalName);
         public abstract bool Validate();
+
+        private void InitializeComponent()
+        {
+
+        }
+
         public virtual UserControl GetConfigControl() => this;
     }
 }

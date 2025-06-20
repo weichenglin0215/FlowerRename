@@ -24,3 +24,4 @@ C:\3D_prj\VS_2022_prj\FlowerRename\obj\Debug\net9.0-windows10.0.22000.0\refint\F
 C:\3D_prj\VS_2022_prj\FlowerRename\obj\Debug\net9.0-windows10.0.22000.0\FlowerRename.pdb
 C:\3D_prj\VS_2022_prj\FlowerRename\obj\Debug\net9.0-windows10.0.22000.0\FlowerRename.genruntimeconfig.cache
 C:\3D_prj\VS_2022_prj\FlowerRename\obj\Debug\net9.0-windows10.0.22000.0\ref\FlowerRename.dll
+C:\3D_prj\VS_2022_prj\FlowerRename\bin\Debug\net9.0-windows10.0.22000.0\FlowerRename.dll.config

@@ -266,7 +266,7 @@
             Controls.Add(ruleContainer);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form_FlowerRename";
-            Text = "開心花更名";
+            Text = "開心花更名 V0.2.2";
             ruleContainer.ResumeLayout(false);
             toolStrip.ResumeLayout(false);
             toolStrip.PerformLayout();
