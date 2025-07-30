@@ -1,0 +1,3 @@
+C:\3D_prj\VS_2022_prj\FlowerRename\bin\Release\net9.0-windows10.0.22000.0\publish\win-x64\FlowerRename.pdb
+C:\3D_prj\VS_2022_prj\FlowerRename\bin\Release\net9.0-windows10.0.22000.0\publish\win-x64\FlowerRename.dll.config
+C:\3D_prj\VS_2022_prj\FlowerRename\bin\Release\net9.0-windows10.0.22000.0\publish\win-x64\FlowerRename.exe

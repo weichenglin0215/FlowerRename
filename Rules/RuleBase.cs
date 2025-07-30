@@ -1,3 +1,5 @@
+using System.Xml.Serialization;
+using System.ComponentModel;
 namespace FlowerRename
 {
     public abstract class RuleBase : UserControl, IRenameRule
@@ -6,11 +8,13 @@ namespace FlowerRename
         protected bool _isExpanded;
         protected bool _isEnabled;
         public abstract string RuleName { get; }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsExpanded
         {
             get => _isExpanded;
             set => _isExpanded = value;
         }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public virtual bool IsEnabled
         {
             get => _isEnabled;

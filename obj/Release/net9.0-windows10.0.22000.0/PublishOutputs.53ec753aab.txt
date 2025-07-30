@@ -1,0 +1,8 @@
+C:\3D_prj\VS_2022_prj\FlowerRename\bin\Release\net9.0-windows10.0.22000.0\publish\FlowerRename.exe
+C:\3D_prj\VS_2022_prj\FlowerRename\bin\Release\net9.0-windows10.0.22000.0\publish\FlowerRename.dll
+C:\3D_prj\VS_2022_prj\FlowerRename\bin\Release\net9.0-windows10.0.22000.0\publish\FlowerRename.deps.json
+C:\3D_prj\VS_2022_prj\FlowerRename\bin\Release\net9.0-windows10.0.22000.0\publish\FlowerRename.runtimeconfig.json
+C:\3D_prj\VS_2022_prj\FlowerRename\bin\Release\net9.0-windows10.0.22000.0\publish\FlowerRename.dll.config
+C:\3D_prj\VS_2022_prj\FlowerRename\bin\Release\net9.0-windows10.0.22000.0\publish\FlowerRename.pdb
+C:\3D_prj\VS_2022_prj\FlowerRename\bin\Release\net9.0-windows10.0.22000.0\publish\Microsoft.Windows.SDK.NET.dll
+C:\3D_prj\VS_2022_prj\FlowerRename\bin\Release\net9.0-windows10.0.22000.0\publish\WinRT.Runtime.dll

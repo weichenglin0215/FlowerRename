@@ -14,6 +14,7 @@ namespace FlowerRename
         public Form_FlowerRename()
         {
             InitializeComponent();
+            fileListView.Items.Clear();
             HideButtons();
         }
         public void HideButtons()
@@ -61,6 +62,37 @@ namespace FlowerRename
             }
             fileListView.EndUpdate();
         }
+        private void Form_FlowerRename_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
+                // 只允許拖曳目錄
+                if (paths.Length == 1 && System.IO.Directory.Exists(paths[0]))
+                {
+                    e.Effect = DragDropEffects.Copy;
+                }
+                else
+                {
+                    e.Effect = DragDropEffects.None;
+                }
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+        private void Form_FlowerRename_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (paths.Length == 1 && System.IO.Directory.Exists(paths[0]))
+                {
+                    DragDropOpenDir(paths[0]);
+                }
+            }
+        }
 
         private void btnOpenFiles_Click(object sender, EventArgs e)
         {
@@ -97,20 +129,21 @@ namespace FlowerRename
                         item.SubItems.Add(fileDirectory);
                         fileListView.Items.Add(item);
                     }
+                    if (fileListView.Items.Count > 0 && _ruleManager == null || _ruleManager.getRuleControlPair().Count == 0)
+                    {
+                        _ruleManager = new RuleManager(this); // 確保初始化
+                                                              //_ruleManager.FileNamesUpdated += setSelectedFileList; // 訂閱事件
+                                                              //InitializeRules_AddDefaultRule();
+                    }
+                    if (fileListView.Items.Count > 0)
+                    {
+                        ShowAllButtons();
+                        _ruleManager.GetOriginalFileNames();
+                    }
+                    fileListView.EndUpdate();
+
                 }
             }
-            if (fileListView.Items.Count > 0 && _ruleManager == null || _ruleManager.getRuleControlPair().Count == 0)
-            {
-                _ruleManager = new RuleManager(this); // 確保初始化
-                //_ruleManager.FileNamesUpdated += setSelectedFileList; // 訂閱事件
-                //InitializeRules_AddDefaultRule();
-            }
-            if (fileListView.Items.Count > 0)
-            {
-                ShowAllButtons();
-                _ruleManager.GetOriginalFileNames();
-            }
-            fileListView.EndUpdate();
         }
 
         private void btnOpenDir_Click(object sender, EventArgs e)
@@ -143,13 +176,50 @@ namespace FlowerRename
                         item.SubItems.Add(fileDirectory);
                         fileListView.Items.Add(item);
                     }
+                    if (fileListView.Items.Count > 0 && _ruleManager == null || _ruleManager.getRuleControlPair().Count == 0)
+                    {
+                        _ruleManager = new RuleManager(this); // 確保初始化
+                                                              //_ruleManager.FileNamesUpdated += setSelectedFileList; // 訂閱事件
+                                                              //InitializeRules_AddDefaultRule();
+                    }
+                    if (fileListView.Items.Count > 0)
+                    {
+                        ShowAllButtons();
+                        _ruleManager.GetOriginalFileNames();
+                    }
+                    //sendAllFileList();
+                    fileListView.EndUpdate();
+
                 }
+            }
+        }
+
+        private void DragDropOpenDir(string path)
+        {
+            fileListView.BeginUpdate();
+            fileListView.Items.Clear();
+            // 獲取資料夾中的所有檔案
+            var files = System.IO.Directory.GetFiles(path);
+            foreach (var file in files)
+            {
+                var fileInfo = new System.IO.FileInfo(file);
+                string originalFileName = fileInfo.Name;
+                string newFileName = originalFileName; // 可以根據需要修改
+                string fileSize = fileInfo.Length.ToString();
+                string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                string fileDirectory = fileInfo.DirectoryName;
+                ListViewItem item = new ListViewItem(originalFileName);
+                item.SubItems.Add(newFileName);
+                item.SubItems.Add(fileSize);
+                item.SubItems.Add(fileDate);
+                item.SubItems.Add(fileDirectory);
+                fileListView.Items.Add(item);
             }
             if (fileListView.Items.Count > 0 && _ruleManager == null || _ruleManager.getRuleControlPair().Count == 0)
             {
                 _ruleManager = new RuleManager(this); // 確保初始化
-                //_ruleManager.FileNamesUpdated += setSelectedFileList; // 訂閱事件
-                //InitializeRules_AddDefaultRule();
+                                                      //_ruleManager.FileNamesUpdated += setSelectedFileList; // 訂閱事件
+                                                      //InitializeRules_AddDefaultRule();
             }
             if (fileListView.Items.Count > 0)
             {

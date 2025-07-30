@@ -259,6 +259,7 @@
             // 
             // Form_FlowerRename
             // 
+            AllowDrop = true;
             AutoScaleDimensions = new SizeF(10F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1604, 761);
@@ -266,7 +267,9 @@
             Controls.Add(ruleContainer);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form_FlowerRename";
-            Text = "開心花更名 V0.2.2";
+            Text = "開心花更名 V0.3.0";
+            DragDrop += Form_FlowerRename_DragDrop;
+            DragEnter += Form_FlowerRename_DragEnter;
             ruleContainer.ResumeLayout(false);
             toolStrip.ResumeLayout(false);
             toolStrip.PerformLayout();

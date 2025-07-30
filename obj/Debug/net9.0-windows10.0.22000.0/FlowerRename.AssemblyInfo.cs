@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FlowerRename")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.2.2.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.2.2.0+3a70e7f96bbcdc3bbe91bb9277cb0d70ab18b69d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.3.0.0+4f422bb8d414c4c1f639d5f503d75f10ab23bc84")]
 [assembly: System.Reflection.AssemblyProductAttribute("FlowerRename")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FlowerRename")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.2.2.0")]
