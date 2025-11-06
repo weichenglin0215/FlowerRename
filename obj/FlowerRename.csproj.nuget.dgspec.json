@@ -5,7 +5,7 @@
   },
   "projects": {
     "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\FlowerRename.csproj": {
-      "version": "0.3.0",
+      "version": "0.4.0",
       "restore": {
         "projectUniqueName": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\FlowerRename.csproj",
         "projectName": "FlowerRename",
@@ -63,7 +63,7 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.Net.Sdk.Compilers.Toolset",
-              "version": "[9.0.303, 9.0.303]"
+              "version": "[9.0.306, 9.0.306]"
             },
             {
               "name": "Microsoft.Windows.SDK.NET.Ref",
@@ -81,7 +81,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.303/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

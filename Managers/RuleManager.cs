@@ -194,6 +194,9 @@ namespace FlowerRename
             _originalFileNames = _form_FlowerRename.getSelectedFileList();
             Debug.WriteLine("_originalFileNames：" + _originalFileNames);
             _newFileNames = ProcessNewFileName(_originalFileNames);
+            //將_newFileNames刪除目錄字串只留下檔名與副檔名 
+            _newFileNames = _newFileNames.Select(name => System.IO.Path.GetFileName(name)).ToArray();
+
             _form_FlowerRename.setFileList(_newFileNames);
         }
     }

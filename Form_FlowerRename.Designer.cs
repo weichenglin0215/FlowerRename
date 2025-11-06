@@ -267,7 +267,7 @@
             Controls.Add(ruleContainer);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form_FlowerRename";
-            Text = "開心花更名 V0.3.0";
+            Text = "開心花更名 V0.4.0(增加拖入多個檔案功能)";
             DragDrop += Form_FlowerRename_DragDrop;
             DragEnter += Form_FlowerRename_DragEnter;
             ruleContainer.ResumeLayout(false);
