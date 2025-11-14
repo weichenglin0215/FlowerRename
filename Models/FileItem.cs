@@ -13,7 +13,7 @@ namespace FlowerRename
             originalFileName = fileInfo.Name;
             if (_newFileName == "")
             {
-                newFileName = originalFileName; // ��l�ɷs�ɦW�P���ɦW�ۦP
+                newFileName = originalFileName; // 如果新檔名為空，則新檔名與原始檔名相同
             }
             else
             {

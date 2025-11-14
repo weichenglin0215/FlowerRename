@@ -6,7 +6,7 @@ namespace FlowerRename
         //bool IsExpanded { get; set; }
         //bool IsEnabled { get; set; }
         void UpdateParameters();
-        //­ì¥»³W¹º«ö¤U½T»{¡A«á¨Ó¨S¨Ï¥Î¡A§ï¦¨GenerateFileName()
+        // ä¸»è¦ç”¨æ–¼é‡æ–°å‘½åæª”æ¡ˆï¼Œä¸éœ€è¦åƒæ•¸ï¼Œè«‹ä½¿ç”¨GenerateFileName()
         string[] Apply(string[] fileNames);
         //string GetNewName(string originalName); 
 

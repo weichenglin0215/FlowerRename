@@ -6,9 +6,9 @@ namespace FlowerRename
 {
     public partial class NumberingRuleControl : UserControl
     {
-        public Form_FlowerRename _Form_FlowerRename;
+        public Form_FlowerRename? _Form_FlowerRename;
         public int RuleID; //規則的ID只是用來區分規則，避免重複名稱的規則被誤刪除
-        public event Action<string, int, int, int> BaseFileNameChanged;
+        public event Action<string, int, int, int>? BaseFileNameChanged;
 
         public NumberingRuleControl()
         {
@@ -36,7 +36,7 @@ namespace FlowerRename
             // 移除所有事件订阅者
             BaseFileNameChanged = delegate { };
             //通知Form_FlowerRename把_numberingRule從_ruleManager中刪除
-            _Form_FlowerRename.RemoveRuleControlPair(RuleID);
+            _Form_FlowerRename?.RemoveRuleControlPair(RuleID);
             //刪除自己
             Parent?.Controls.Remove(this);
         }
@@ -52,8 +52,8 @@ namespace FlowerRename
         private int _padding;
         //private bool _isExpanded;
         //private bool _isEnabled;
-        private string[] _originalFileNamesWithoutExt;
-        private string[] _originalFileExtNames;
+        private string[] _originalFileNamesWithoutExt = Array.Empty<string>();
+        private string[] _originalFileExtNames = Array.Empty<string>();
 
         public NumberingRule(NumberingRuleControl ruleControl)
         {

@@ -1,13 +1,12 @@
 using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
 
 namespace FlowerRename
 {
     public partial class Form_FlowerRename : Form
     {
         //private FileListManager _fileListManager; //不想用這個了，很麻煩，檔案清單就直接使用fileListView
-        private RuleManager _ruleManager;
-        private Panel _ruleContainer;
+        private RuleManager? _ruleManager;
+        private Panel? _ruleContainer;
         private int RuleID = 0; //規則的ID只是用來區分規則，避免重複名稱的規則被誤刪除
         ListViewColumnSorter m_LvwColumnSorter = new ListViewColumnSorter();
 
@@ -42,9 +41,9 @@ namespace FlowerRename
         }
         public void InitializeRules_AddDefaultRule()
         {
-            if (_ruleManager.getRuleControlPair().Count == 0)
+            if (_ruleManager != null && _ruleManager.GetRuleControlPair().Count == 0)
             {
-                Debug.WriteLine("_ruleManager.Count: " + _ruleManager.getRuleControlPair().Count.ToString());
+                Debug.WriteLine("_ruleManager.Count: " + _ruleManager.GetRuleControlPair().Count.ToString());
             }
         }
         public void UpdateFileListView(string[] newFileNames)
@@ -64,13 +63,20 @@ namespace FlowerRename
         }
         private void Form_FlowerRename_DragEnter(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            if (e.Data?.GetDataPresent(DataFormats.FileDrop) == true)
             {
-                string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
-                // 檢查是否至少有一個檔案或目錄
-                if (paths.Any(path => System.IO.File.Exists(path) || System.IO.Directory.Exists(path)))
+                var data = e.Data.GetData(DataFormats.FileDrop);
+                if (data is string[] paths && paths != null)
                 {
-                    e.Effect = DragDropEffects.Copy;
+                    // 檢查是否至少有一個檔案或目錄
+                    if (paths.Any(path => System.IO.File.Exists(path) || System.IO.Directory.Exists(path)))
+                    {
+                        e.Effect = DragDropEffects.Copy;
+                    }
+                    else
+                    {
+                        e.Effect = DragDropEffects.None;
+                    }
                 }
                 else
                 {
@@ -84,22 +90,24 @@ namespace FlowerRename
         }
         private void Form_FlowerRename_DragDrop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            if (e.Data?.GetDataPresent(DataFormats.FileDrop) == true)
             {
-                string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
-
-                // 先處理目錄
-                foreach (var dir in paths.Where(System.IO.Directory.Exists))
+                var data = e.Data.GetData(DataFormats.FileDrop);
+                if (data is string[] paths && paths != null)
                 {
-                    DragDropOpenDir(dir);
-                }
+                    // 先處理目錄
+                    foreach (var dir in paths.Where(System.IO.Directory.Exists))
+                    {
+                        DragDropOpenDir(dir);
+                    }
 
-                // 再處理檔案
-                var files = paths.Where(System.IO.File.Exists).ToArray();
-                if (files.Length > 0)
-                {
-                    Debug.WriteLine("files " + files[0]);
-                    DragDropOpenFiles(files);
+                    // 再處理檔案
+                    var files = paths.Where(System.IO.File.Exists).ToArray();
+                    if (files.Length > 0)
+                    {
+                        Debug.WriteLine("files " + files[0]);
+                        DragDropOpenFiles(files);
+                    }
                 }
             }
         }
@@ -123,32 +131,19 @@ namespace FlowerRename
                     // 將選擇的檔案添加到 fileListView
                     foreach (string file in openFileDialog.FileNames)
                     {
-                        // 獲取檔案資訊
-                        var fileInfo = new System.IO.FileInfo(file);
-                        string originalFileName = fileInfo.Name; // 原有檔名
-                        string newFileName = originalFileName; // 新檔名（可以根據需要修改）
-                        string fileSize = fileInfo.Length.ToString(); // 檔案大小
-                        string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss"); // 檔案日期
-                        string fileDirectory = fileInfo.DirectoryName; // 檔案目錄
-
-                        // 創建 ListViewItem 並添加到 fileListView
-                        ListViewItem item = new ListViewItem(originalFileName);
-                        item.SubItems.Add(newFileName);
-                        item.SubItems.Add(fileSize);
-                        item.SubItems.Add(fileDate);
-                        item.SubItems.Add(fileDirectory);
-                        fileListView.Items.Add(item);
+                        AddFileToListView(file, checkDuplicate: false);
                     }
-                    if (fileListView.Items.Count > 0 && _ruleManager == null || _ruleManager.getRuleControlPair().Count == 0)
+                    if (fileListView.Items.Count > 0 && (_ruleManager == null || _ruleManager.GetRuleControlPair().Count == 0))
                     {
                         _ruleManager = new RuleManager(this); // 確保初始化
-                                                              //_ruleManager.FileNamesUpdated += setSelectedFileList; // 訂閱事件
-                                                              //InitializeRules_AddDefaultRule();
                     }
                     if (fileListView.Items.Count > 0)
                     {
                         ShowAllButtons();
-                        _ruleManager.GetOriginalFileNames();
+                        if (_ruleManager != null)
+                        {
+                            _ruleManager.GetOriginalFileNames();
+                        }
                     }
                     fileListView.EndUpdate();
 
@@ -168,36 +163,31 @@ namespace FlowerRename
                     string selectedPath = folderBrowserDialog.SelectedPath;
                     fileListView.Items.Clear();
 
-                    // 獲取???料夾中的所有檔案
-                    var files = System.IO.Directory.GetFiles(selectedPath);
-                    foreach (var file in files)
+                    // 獲取資料夾中的所有檔案
+                    try
                     {
-                        var fileInfo = new System.IO.FileInfo(file);
-                        string originalFileName = fileInfo.Name;
-                        string newFileName = originalFileName; // 可以根據需要修改
-                        string fileSize = fileInfo.Length.ToString();
-                        string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
-                        string fileDirectory = fileInfo.DirectoryName;
-
-                        ListViewItem item = new ListViewItem(originalFileName);
-                        item.SubItems.Add(newFileName);
-                        item.SubItems.Add(fileSize);
-                        item.SubItems.Add(fileDate);
-                        item.SubItems.Add(fileDirectory);
-                        fileListView.Items.Add(item);
+                        var files = System.IO.Directory.GetFiles(selectedPath);
+                        foreach (var file in files)
+                        {
+                            AddFileToListView(file, checkDuplicate: false);
+                        }
                     }
-                    if (fileListView.Items.Count > 0 && _ruleManager == null || _ruleManager.getRuleControlPair().Count == 0)
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"讀取資料夾時發生錯誤：{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    if (fileListView.Items.Count > 0 && (_ruleManager == null || _ruleManager.GetRuleControlPair().Count == 0))
                     {
                         _ruleManager = new RuleManager(this); // 確保初始化
-                                                              //_ruleManager.FileNamesUpdated += setSelectedFileList; // 訂閱事件
-                                                              //InitializeRules_AddDefaultRule();
                     }
                     if (fileListView.Items.Count > 0)
                     {
                         ShowAllButtons();
-                        _ruleManager.GetOriginalFileNames();
+                        if (_ruleManager != null)
+                        {
+                            _ruleManager.GetOriginalFileNames();
+                        }
                     }
-                    //sendAllFileList();
                     fileListView.EndUpdate();
 
                 }
@@ -207,40 +197,32 @@ namespace FlowerRename
         private void DragDropOpenDir(string path)
         {
             fileListView.BeginUpdate();
-            //fileListView.Items.Clear();
-            // 獲取資料夾中的所有檔案
-            var files = System.IO.Directory.GetFiles(path);
-            foreach (var file in files)
+            try
             {
-                var fileInfo = new System.IO.FileInfo(file);
-                string originalFileName = fileInfo.Name;
-                string newFileName = originalFileName; // 可以根據需要修改
-                string fileSize = fileInfo.Length.ToString();
-                string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
-                string fileDirectory = fileInfo.DirectoryName;
-
-                if (!IsFileInListView(originalFileName, fileDirectory))
+                // 獲取資料夾中的所有檔案
+                var files = System.IO.Directory.GetFiles(path);
+                foreach (var file in files)
                 {
-                    ListViewItem item = new ListViewItem(originalFileName);
-                    item.SubItems.Add(newFileName);
-                    item.SubItems.Add(fileSize);
-                    item.SubItems.Add(fileDate);
-                    item.SubItems.Add(fileDirectory);
-                    fileListView.Items.Add(item);
+                    AddFileToListView(file, checkDuplicate: true);
                 }
             }
-            if (fileListView.Items.Count > 0 && _ruleManager == null || _ruleManager.getRuleControlPair().Count == 0)
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"拖放開啟資料夾時發生錯誤: {path}, 錯誤訊息: {ex.Message}");
+                MessageBox.Show($"讀取資料夾時發生錯誤：{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            if (fileListView.Items.Count > 0 && (_ruleManager == null || _ruleManager.GetRuleControlPair().Count == 0))
             {
                 _ruleManager = new RuleManager(this); // 確保初始化
-                                                      //_ruleManager.FileNamesUpdated += setSelectedFileList; // 訂閱事件
-                                                      //InitializeRules_AddDefaultRule();
             }
             if (fileListView.Items.Count > 0)
             {
                 ShowAllButtons();
-                _ruleManager.GetOriginalFileNames();
+                if (_ruleManager != null)
+                {
+                    _ruleManager.GetOriginalFileNames();
+                }
             }
-            //sendAllFileList();
             fileListView.EndUpdate();
         }
 
@@ -249,35 +231,23 @@ namespace FlowerRename
             fileListView.BeginUpdate();
             foreach (var file in files)
             {
-                var fileInfo = new System.IO.FileInfo(file);
-                string originalFileName = fileInfo.Name;
-                string newFileName = originalFileName;
-                string fileSize = fileInfo.Length.ToString();
-                string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
-                string fileDirectory = fileInfo.DirectoryName;
                 Debug.WriteLine("file " + file);
-                // 檢查檔案是否已存在
-                if (!IsFileInListView(originalFileName, fileDirectory))
+                if (AddFileToListView(file, checkDuplicate: true))
                 {
-                    ListViewItem item = new ListViewItem(originalFileName);
-                    item.SubItems.Add(newFileName);
-                    item.SubItems.Add(fileSize);
-                    item.SubItems.Add(fileDate);
-                    item.SubItems.Add(fileDirectory);
-                    fileListView.Items.Add(item);
                     Debug.WriteLine("file add " + file);
                 }
             }
-            if (fileListView.Items.Count > 0 && _ruleManager == null || _ruleManager.getRuleControlPair().Count == 0)
+            if (fileListView.Items.Count > 0 && (_ruleManager == null || _ruleManager.GetRuleControlPair().Count == 0))
             {
                 _ruleManager = new RuleManager(this); // 確保初始化
-                                                      //_ruleManager.FileNamesUpdated += setSelectedFileList; // 訂閱事件
-                                                      //InitializeRules_AddDefaultRule();
             }
             if (fileListView.Items.Count > 0)
             {
                 ShowAllButtons();
-                _ruleManager.GetOriginalFileNames();
+                if (_ruleManager != null)
+                {
+                    _ruleManager.GetOriginalFileNames();
+                }
             }
             fileListView.EndUpdate();
         }
@@ -295,27 +265,10 @@ namespace FlowerRename
                 {
                     foreach (string file in openFileDialog.FileNames)
                     {
-                        var fileInfo = new System.IO.FileInfo(file);
-                        string originalFileName = fileInfo.Name;
-                        string newFileName = originalFileName; // 可以根據需要修改
-                        string fileSize = fileInfo.Length.ToString();
-                        string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
-                        string fileDirectory = fileInfo.DirectoryName;
-
-                        // 檢查檔案是否已存在
-                        if (!IsFileInListView(originalFileName, fileDirectory))
-                        {
-                            ListViewItem item = new ListViewItem(originalFileName);
-                            item.SubItems.Add(newFileName);
-                            item.SubItems.Add(fileSize);
-                            item.SubItems.Add(fileDate);
-                            item.SubItems.Add(fileDirectory);
-                            fileListView.Items.Add(item);
-                        }
+                        AddFileToListView(file, checkDuplicate: true);
                     }
                 }
             }
-            //sendAllFileList();
             fileListView.EndUpdate();
         }
 
@@ -331,30 +284,20 @@ namespace FlowerRename
                     string selectedPath = folderBrowserDialog.SelectedPath;
 
                     // 獲取資料夾中的所有檔案
-                    var files = System.IO.Directory.GetFiles(selectedPath);
-                    foreach (var file in files)
+                    try
                     {
-                        var fileInfo = new System.IO.FileInfo(file);
-                        string originalFileName = fileInfo.Name;
-                        string newFileName = originalFileName; // 可以根據需要修改
-                        string fileSize = fileInfo.Length.ToString();
-                        string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
-                        string fileDirectory = fileInfo.DirectoryName;
-
-                        // 檢查檔案是否已存在
-                        if (!IsFileInListView(originalFileName, fileDirectory))
+                        var files = System.IO.Directory.GetFiles(selectedPath);
+                        foreach (var file in files)
                         {
-                            ListViewItem item = new ListViewItem(originalFileName);
-                            item.SubItems.Add(newFileName);
-                            item.SubItems.Add(fileSize);
-                            item.SubItems.Add(fileDate);
-                            item.SubItems.Add(fileDirectory);
-                            fileListView.Items.Add(item);
+                            AddFileToListView(file, checkDuplicate: true);
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"讀取資料夾時發生錯誤：{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
-            //sendAllFileList();
             fileListView.EndUpdate();
         }
 
@@ -381,7 +324,7 @@ namespace FlowerRename
             if (!hasCheckedItems)
             {
                 MessageBox.Show("您沒有勾選任何項目。\n\n請先勾選要刪除的項目再清除。", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return; // 退??方法
+                return; // 退出方法
             }
 
             // 從後往前刪除已勾選的項目，以避免索引錯誤
@@ -397,8 +340,50 @@ namespace FlowerRename
             {
                 HideButtons();
             }
-            //sendAllFileList();
         }
+        /// <summary>
+        /// 將檔案添加到 ListView 的共用方法
+        /// </summary>
+        /// <param name="filePath">檔案完整路徑</param>
+        /// <param name="checkDuplicate">是否檢查重複檔案</param>
+        /// <returns>是否成功添加</returns>
+        private bool AddFileToListView(string filePath, bool checkDuplicate = true)
+        {
+            try
+            {
+                if (!System.IO.File.Exists(filePath))
+                {
+                    return false;
+                }
+
+                var fileInfo = new System.IO.FileInfo(filePath);
+                string originalFileName = fileInfo.Name;
+                string newFileName = originalFileName;
+                string fileSize = fileInfo.Length.ToString();
+                string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                string fileDirectory = fileInfo.DirectoryName ?? string.Empty;
+
+                // 檢查檔案是否已存在
+                if (checkDuplicate && IsFileInListView(originalFileName, fileDirectory))
+                {
+                    return false;
+                }
+
+                ListViewItem item = new ListViewItem(originalFileName);
+                item.SubItems.Add(newFileName);
+                item.SubItems.Add(fileSize);
+                item.SubItems.Add(fileDate);
+                item.SubItems.Add(fileDirectory);
+                fileListView.Items.Add(item);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"添加檔案到 ListView 時發生錯誤: {filePath}, 錯誤訊息: {ex.Message}");
+                return false;
+            }
+        }
+
         private bool IsFileInListView(string fileName, string fileDirectory)
         {
             foreach (ListViewItem item in fileListView.Items)
@@ -411,26 +396,19 @@ namespace FlowerRename
             return false; // 檔案不存在
         }
 
-        public void sendAllFileList()
-        {
-            // 把fileListView的檔案路徑和檔案名稱傳給FileListManager    
-            //傳給_fileListManager.getAllFileList()第一個參數必須是路徑加上檔名
-            //_fileListManager.setAllFileList(fileListView.Items.Cast<ListViewItem>().Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[0].Text)).ToArray(),fileListView.Items.Cast<ListViewItem>().Select(item => item.SubItems[1].Text).ToArray());
-        }
 
-        public string[] getFileList()
+        public string[] GetFileList()
         {
             //回傳fileListView所有項目的原始檔案路徑和原始檔案名稱
             return fileListView.Items.Cast<ListViewItem>().Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[0].Text)).ToArray();
-            //return fileListView.Items.Cast<ListViewItem>().Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[0].Text)).ToArray();
         }
-        public string[] getSelectedFileList()
+        public string[] GetSelectedFileList()
         {
             //取得fileListView的原始檔案路徑和原始檔案名稱
             return fileListView.Items.Cast<ListViewItem>().Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[0].Text)).ToArray();
         }
 
-        public void setFileList(string[] newFileNames)
+        public void SetFileList(string[] newFileNames)
         {
             fileListView.BeginUpdate();
             //把newFileNames設定給fileListView的SubItems[1]新檔名
@@ -451,34 +429,88 @@ namespace FlowerRename
             //新檔案名稱必須包含原始檔案路徑
             string[] newFileNames = fileListView.Items.Cast<ListViewItem>().Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[1].Text)).ToArray();
             int successCount = 0;
+            int failCount = 0;
+            List<string> failedFiles = new List<string>();
+            
             //要真的修改磁碟機中的檔案名稱
             for (int i = 0; i < originalFileNames.Length; i++)
             {
-                //這裡要如何判定更名成功沒有出錯
-                if (System.IO.File.Exists(newFileNames[i]))
+                try
                 {
-                    MessageBox.Show("更名失敗，無法覆寫，新檔案名稱 " + newFileNames[i] + " 已存在", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-                else if (System.IO.File.Exists(originalFileNames[i]))
-                {
+                    // 檢查新檔案名稱是否已存在
+                    if (System.IO.File.Exists(newFileNames[i]))
+                    {
+                        failedFiles.Add($"{originalFileNames[i]} -> {newFileNames[i]} (目標檔案已存在)");
+                        failCount++;
+                        continue;
+                    }
+                    
+                    // 檢查原始檔案是否存在
+                    if (!System.IO.File.Exists(originalFileNames[i]))
+                    {
+                        failedFiles.Add($"{originalFileNames[i]} (原始檔案不存在)");
+                        failCount++;
+                        continue;
+                    }
+                    
+                    // 執行檔案更名
                     System.IO.File.Move(originalFileNames[i], newFileNames[i]);
-                    //如果更名成功沒有出錯，則把fileListView的原始檔名更成新檔名
+                    
+                    // 如果更名成功沒有出錯，則把fileListView的原始檔名更成新檔名
                     fileListView.Items[i].SubItems[0].Text = fileListView.Items[i].SubItems[1].Text;
                     successCount++;
                 }
+                catch (UnauthorizedAccessException ex)
+                {
+                    failedFiles.Add($"{originalFileNames[i]} -> {newFileNames[i]} (權限不足: {ex.Message})");
+                    failCount++;
+                }
+                catch (System.IO.IOException ex)
+                {
+                    failedFiles.Add($"{originalFileNames[i]} -> {newFileNames[i]} (IO錯誤: {ex.Message})");
+                    failCount++;
+                }
+                catch (Exception ex)
+                {
+                    failedFiles.Add($"{originalFileNames[i]} -> {newFileNames[i]} (錯誤: {ex.Message})");
+                    failCount++;
+                }
+            }
+            
+            // 顯示結果訊息
+            string message = $"成功更名 {successCount} 個檔案";
+            if (failCount > 0)
+            {
+                message += $"\n失敗 {failCount} 個檔案";
+                if (failedFiles.Count <= 10)
+                {
+                    message += "\n\n失敗的檔案：\n" + string.Join("\n", failedFiles);
+                }
                 else
                 {
-                    MessageBox.Show("更名失敗，原始檔案 " + originalFileNames[i] + " 不存在", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    message += "\n\n前10個失敗的檔案：\n" + string.Join("\n", failedFiles.Take(10));
+                    message += $"\n... 還有 {failedFiles.Count - 10} 個檔案失敗";
                 }
-
+                MessageBox.Show(message, failCount > 0 ? "部分成功" : "成功", MessageBoxButtons.OK, failCount > 0 ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
             }
-            MessageBox.Show("成功更名 " + successCount + " 個檔案", "成功", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            else
+            {
+                MessageBox.Show(message, "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            
             //並將檔名資料傳送給_ruleManager
-            _ruleManager.SetOriginalFileNames(newFileNames);
+            if (_ruleManager != null && successCount > 0)
+            {
+                _ruleManager.SetOriginalFileNames(newFileNames);
+            }
         }
 
         private void comboBoxAddRule_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (comboBoxAddRule.SelectedItem == null || _ruleManager == null)
+            {
+                return;
+            }
             //MessageBox.Show("測試" + comboBoxAddRule.SelectedItem.ToString(), "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             switch (comboBoxAddRule.SelectedItem.ToString())
             {
@@ -538,7 +570,6 @@ namespace FlowerRename
                     _ruleManager.AddRuleControlPair(GroupRule, GroupRuleControl, RuleID); // 添加或更新規則
                     RuleID++;
                     break;
-                    break;
             }
             //讓comboBoxAddRule的選項變成第一個
             comboBoxAddRule.SelectedIndex = 0;
@@ -549,8 +580,10 @@ namespace FlowerRename
 
         public void RemoveRuleControlPair(int RuleID)
         {
-            //RuleManager.RuleControlPair ruleControlPair
-            _ruleManager.RemoveRuleControlPair(RuleID);
+            if (_ruleManager != null)
+            {
+                _ruleManager.RemoveRuleControlPair(RuleID);
+            }
         }
         // 處理檔案列表欄位點擊排序
         private void fileListView_ColumnClick(object sender, ColumnClickEventArgs e)
@@ -590,7 +623,10 @@ namespace FlowerRename
             // 執行排序
             this.fileListView.Sort();
             Debug.WriteLine("SORT");
-            _ruleManager.RefreshForm_FlowerRename_FileList(); //通知RuleManager更新計算並更新主介面的新舊檔名。
+            if (_ruleManager != null)
+            {
+                _ruleManager.RefreshForm_FlowerRename_FileList(); //通知RuleManager更新計算並更新主介面的新舊檔名。
+            }
             fileListView.EndUpdate();
         }
     }

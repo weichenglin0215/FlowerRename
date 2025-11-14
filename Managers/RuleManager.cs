@@ -5,8 +5,8 @@ namespace FlowerRename
     public class RuleManager
     {
         private Form_FlowerRename _form_FlowerRename;
-        private string[] _originalFileNames;
-        private string[] _newFileNames;
+        private string[] _originalFileNames = Array.Empty<string>();
+        private string[] _newFileNames = Array.Empty<string>();
         public struct RuleControlPair
         {
             public int RuleID;
@@ -18,23 +18,22 @@ namespace FlowerRename
         public RuleManager(Form_FlowerRename form)
         {
             _form_FlowerRename = form;
-            _originalFileNames = _form_FlowerRename.getFileList();
-            //_form_FlowerRename.InitializeRules_AddNumbering(); // 這樣寫會報錯
+            _originalFileNames = _form_FlowerRename.GetFileList();
         }
 
         // 取得所有規則組(包含規則介面和控制項)
-        public List<RuleControlPair> getRuleControlPair()
+        public List<RuleControlPair> GetRuleControlPair()
         {
             return _ruleControlPairs;
         }
 
         // 取得所有規則介面的控制項
-        public List<UserControl> getRuleControls()
+        public List<UserControl> GetRuleControls()
         {
             return _ruleControlPairs.Select(pair => pair.Control).ToList();
         }
         //如何透過UserControl去找到RuleControlPair  
-        public RuleControlPair findRuleControlPair(UserControl userControl)
+        public RuleControlPair FindRuleControlPair(UserControl userControl)
         {
             Debug.WriteLine("findRuleControlPair" + _ruleControlPairs.FirstOrDefault(pair => pair.Control == userControl));
             return _ruleControlPairs.FirstOrDefault(pair => pair.Control == userControl);
@@ -68,16 +67,9 @@ namespace FlowerRename
             
             if (ruleControl is NumberingRuleControl numberingRuleControl)
             {
-                numberingRuleControl.BaseFileNameChanged += (baseFileName, startNumber, incNumber,padding) =>
+                numberingRuleControl.BaseFileNameChanged += (baseFileName, startNumber, incNumber, padding) =>
                 {
                     RefreshForm_FlowerRename_FileList(); //更新計算並更新主介面的新舊檔名。
-                    // 更新規則的參數
-                    //UpdateRuleParameters();
-                    // 計算新的檔名
-                    //_originalFileNames = _form_FlowerRename.getSelectedFileList();
-                    //Debug.WriteLine("_originalFileNames：" + _originalFileNames);
-                    //_newFileNames = ProcessNewFileName(_originalFileNames);
-                    //_form_FlowerRename.setFileList(_newFileNames);
                 };
             }
             else if (ruleControl is ReplaceRuleControl replaceRuleControl)
@@ -85,13 +77,6 @@ namespace FlowerRename
                 replaceRuleControl.ReplaceFileNameChanged += (baseFileName, replaceFileName, fromstartComboBox, startNumber, replaceAllStringCheckBox) =>
                 {
                     RefreshForm_FlowerRename_FileList(); //更新計算並更新主介面的新舊檔名。
-                    // 更新規則的參數
-                    //UpdateRuleParameters();
-                    // 計算新的檔名
-                    //_originalFileNames = _form_FlowerRename.getSelectedFileList();
-                    //Debug.WriteLine("_originalFileNames：" + _originalFileNames);
-                    //_newFileNames = ProcessNewFileName(_originalFileNames);
-                    //_form_FlowerRename.setFileList(_newFileNames);
                 };
             }
             else if (ruleControl is InsertRuleControl InsertRuleControl)
@@ -99,13 +84,6 @@ namespace FlowerRename
                 InsertRuleControl.InsertFileNameChanged += (baseFileName, insertFileName, fromstartComboBox, startInsertNumber, InsertNumberCheckBox, startNumber, incNumber, padding) =>
                 {
                     RefreshForm_FlowerRename_FileList(); //更新計算並更新主介面的新舊檔名。
-                    // 更新規則的參數
-                    //UpdateRuleParameters();
-                    // 計算新的檔名
-                    //_originalFileNames = _form_FlowerRename.getSelectedFileList();
-                    //Debug.WriteLine("_originalFileNames：" + _originalFileNames);
-                    //_newFileNames = ProcessNewFileName(_originalFileNames);
-                    //_form_FlowerRename.setFileList(_newFileNames);
                 };
             }
             else if (ruleControl is GroupRuleControl GroupRuleControl)
@@ -113,16 +91,8 @@ namespace FlowerRename
                 GroupRuleControl.GroupFileNameChanged += (GroupFileName, startNumber, incNumber, padding, groupAmount) =>
                 {
                     RefreshForm_FlowerRename_FileList(); //更新計算並更新主介面的新舊檔名。
-                    // 更新規則的參數
-                    //UpdateRuleParameters();
-                    // 計算新的檔名
-                    //_originalFileNames = _form_FlowerRename.getSelectedFileList();
-                    //Debug.WriteLine("_originalFileNames：" + _originalFileNames);
-                    //_newFileNames = ProcessNewFileName(_originalFileNames);
-                    //_form_FlowerRename.setFileList(_newFileNames);
                 };
             }
-            //RefreshForm_FlowerRename_FileList();
         }
 
 
@@ -136,31 +106,19 @@ namespace FlowerRename
             _ruleControlPairs.RemoveAt(oldIndex);
             _ruleControlPairs.Insert(newIndex, rule);
         }
-        /* 重複功能了
-        public void UpdateMainInterfaceFileNameInOneGo() //更新計算並更新主介面的新舊檔名。
-        {
-            // 更新規則的參數
-            UpdateRuleParameters();
-            // 計算新的檔名
-            _originalFileNames = _form_FlowerRename.getSelectedFileList();
-            Debug.WriteLine("_originalFileNames：" + _originalFileNames);
-            _newFileNames = ProcessNewFileName(_originalFileNames);
-            _form_FlowerRename.setFileList(_newFileNames);
-            //更新主介面
-            RefreshForm_FlowerRename_FileList();
-        }
-        */
-
         private void UpdateRuleParameters()
         {
             foreach (var rule in _ruleControlPairs)
             {
-                rule.Rule.UpdateParameters();
+                if (rule.Rule != null)
+                {
+                    rule.Rule.UpdateParameters();
+                }
             }
         }
 
         // 定義事件
-        public event Action<string[]> FileNamesUpdated;
+        public event Action<string[]>? FileNamesUpdated;
 
         private void UpdateFileNames()
         {
@@ -170,7 +128,7 @@ namespace FlowerRename
 
         public void GetOriginalFileNames() 
         {
-            _originalFileNames = _form_FlowerRename.getFileList();
+            _originalFileNames = _form_FlowerRename.GetFileList();
         }
         public void SetOriginalFileNames(string[] originalFileNames)
         {
@@ -181,7 +139,10 @@ namespace FlowerRename
             string[] results = originalNames;
             foreach (var rule in _ruleControlPairs)
             {
-                results = rule.Rule.Apply(results);
+                if (rule.Rule != null)
+                {
+                    results = rule.Rule.Apply(results);
+                }
             }
             return results;
         }
@@ -191,13 +152,13 @@ namespace FlowerRename
             // 更新規則的參數
             UpdateRuleParameters();
             // 計算新的檔名
-            _originalFileNames = _form_FlowerRename.getSelectedFileList();
+            _originalFileNames = _form_FlowerRename.GetSelectedFileList();
             Debug.WriteLine("_originalFileNames：" + _originalFileNames);
             _newFileNames = ProcessNewFileName(_originalFileNames);
             //將_newFileNames刪除目錄字串只留下檔名與副檔名 
             _newFileNames = _newFileNames.Select(name => System.IO.Path.GetFileName(name)).ToArray();
 
-            _form_FlowerRename.setFileList(_newFileNames);
+            _form_FlowerRename.SetFileList(_newFileNames);
         }
     }
 }
