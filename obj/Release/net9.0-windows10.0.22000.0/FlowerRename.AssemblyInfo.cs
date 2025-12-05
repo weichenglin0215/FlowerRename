@@ -13,11 +13,11 @@ using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("FlowerRename")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("0.2.2.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.3.0.0+4f422bb8d414c4c1f639d5f503d75f10ab23bc84")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("0.4.3.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.4.3.0+e0090817c579fc99ad6683cec4a4c9d224ae634a")]
 [assembly: System.Reflection.AssemblyProductAttribute("FlowerRename")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FlowerRename")]
-[assembly: System.Reflection.AssemblyVersionAttribute("0.2.2.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("0.4.3.0")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows10.0.22000.0")]
 [assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows10.0.22000.0")]
 

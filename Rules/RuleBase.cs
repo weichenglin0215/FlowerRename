@@ -57,6 +57,13 @@ namespace FlowerRename
 
         private void InitializeComponent()
         {
+            SuspendLayout();
+            // 
+            // RuleBase
+            // 
+            Name = "RuleBase";
+            Size = new Size(598, 110);
+            ResumeLayout(false);
 
         }
 
