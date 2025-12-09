@@ -43,10 +43,10 @@
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form_FlowerRename));
-            ListViewItem listViewItem5 = new ListViewItem(new string[] { "123", "aaaaaa", "123" }, -1, Color.Empty, SystemColors.MenuHighlight, null);
-            ListViewItem listViewItem6 = new ListViewItem(new string[] { "4555", "4555" }, -1);
-            ListViewItem listViewItem7 = new ListViewItem(new string[] { "6666", "6666" }, -1);
-            ListViewItem listViewItem8 = new ListViewItem(new string[] { "8888", "8888" }, -1);
+            ListViewItem listViewItem1 = new ListViewItem(new string[] { "123", "aaaaaa", "123" }, -1, Color.Empty, SystemColors.MenuHighlight, null);
+            ListViewItem listViewItem2 = new ListViewItem(new string[] { "4555", "4555" }, -1);
+            ListViewItem listViewItem3 = new ListViewItem(new string[] { "6666", "6666" }, -1);
+            ListViewItem listViewItem4 = new ListViewItem(new string[] { "8888", "8888" }, -1);
             comboBoxAddRule = new ComboBox();
             ruleContainer = new Panel();
             menuStripAddRule = new MenuStrip();
@@ -73,6 +73,7 @@
             contextMenuStrip_Files = new ContextMenuStrip(components);
             toolStripMenuItem_ClearSelected = new ToolStripMenuItem();
             toolStripMenuItem_CopyFileNameToClipboard = new ToolStripMenuItem();
+            toolStripMenuItem_OpenFile = new ToolStripMenuItem();
             columnFileName = new ColumnHeader();
             columnNewName = new ColumnHeader();
             columnPath = new ColumnHeader();
@@ -302,11 +303,11 @@
             fileListView.ContextMenuStrip = contextMenuStrip_Files;
             fileListView.FullRowSelect = true;
             fileListView.GridLines = true;
-            listViewItem5.StateImageIndex = 0;
-            listViewItem6.StateImageIndex = 0;
-            listViewItem7.StateImageIndex = 0;
-            listViewItem8.StateImageIndex = 0;
-            fileListView.Items.AddRange(new ListViewItem[] { listViewItem5, listViewItem6, listViewItem7, listViewItem8 });
+            listViewItem1.StateImageIndex = 0;
+            listViewItem2.StateImageIndex = 0;
+            listViewItem3.StateImageIndex = 0;
+            listViewItem4.StateImageIndex = 0;
+            fileListView.Items.AddRange(new ListViewItem[] { listViewItem1, listViewItem2, listViewItem3, listViewItem4 });
             fileListView.Location = new Point(0, 48);
             fileListView.Name = "fileListView";
             fileListView.Size = new Size(1180, 690);
@@ -342,9 +343,9 @@
             // 
             // contextMenuStrip_Files
             // 
-            contextMenuStrip_Files.Items.AddRange(new ToolStripItem[] { toolStripMenuItem_ClearSelected, toolStripMenuItem_CopyFileNameToClipboard });
+            contextMenuStrip_Files.Items.AddRange(new ToolStripItem[] { toolStripMenuItem_ClearSelected, toolStripMenuItem_CopyFileNameToClipboard, toolStripMenuItem_OpenFile });
             contextMenuStrip_Files.Name = "contextMenuStrip_Files";
-            contextMenuStrip_Files.Size = new Size(207, 52);
+            contextMenuStrip_Files.Size = new Size(207, 76);
             // 
             // toolStripMenuItem_ClearSelected
             // 
@@ -359,6 +360,13 @@
             toolStripMenuItem_CopyFileNameToClipboard.Size = new Size(206, 24);
             toolStripMenuItem_CopyFileNameToClipboard.Text = "複製檔名至剪貼簿";
             toolStripMenuItem_CopyFileNameToClipboard.Click += toolStripMenuItem_CopyFileNameToClipboard_Click;
+            // 
+            // toolStripMenuItem_OpenFile
+            // 
+            toolStripMenuItem_OpenFile.Name = "toolStripMenuItem_OpenFile";
+            toolStripMenuItem_OpenFile.Size = new Size(206, 24);
+            toolStripMenuItem_OpenFile.Text = "開啟項目...";
+            toolStripMenuItem_OpenFile.Click += fileListView_DoubleClick;
             // 
             // rightPanel
             // 
@@ -446,7 +454,7 @@
             Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStripAddRule;
             Name = "Form_FlowerRename";
-            Text = "開心花更名 V0.4.3(新增開啟選擇項目、狀態列、拖入多個目錄檔案功能、undo，修正清除項目錯誤)";
+            Text = "開心花更名 V0.5.0(新增刪除功能、開啟選擇項目、狀態列、拖入多個目錄檔案功能、undo，修正清除項目錯誤)";
             DragDrop += Form_FlowerRename_DragDrop;
             DragEnter += Form_FlowerRename_DragEnter;
             ruleContainer.ResumeLayout(false);
@@ -497,5 +505,6 @@
         private ContextMenuStrip contextMenuStrip_Files;
         private ToolStripMenuItem toolStripMenuItem_ClearSelected;
         private ToolStripMenuItem toolStripMenuItem_CopyFileNameToClipboard;
+        private ToolStripMenuItem toolStripMenuItem_OpenFile;
     }
 }

@@ -86,6 +86,13 @@ namespace FlowerRename
                     RefreshForm_FlowerRename_FileList(); //更新計算並更新主介面的新舊檔名。
                 };
             }
+            else if (ruleControl is DeleteRuleControl DeleteRuleControl)
+            {
+                DeleteRuleControl.DeleteFileNameChanged += (_fromStartComboBox, _startNumber, _countNumber) =>
+                {
+                    RefreshForm_FlowerRename_FileList(); //更新計算並更新主介面的新舊檔名。
+                };
+            }
             else if (ruleControl is GroupRuleControl GroupRuleControl)
             {
                 GroupRuleControl.GroupFileNameChanged += (GroupFileName, startNumber, incNumber, padding, groupAmount) =>

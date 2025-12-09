@@ -15,7 +15,7 @@ namespace FlowerRename
             label1 = new Label();
             label2 = new Label();
             label3 = new Label();
-            InsertFileNameTextBox = new TextBox();
+            AppendFileNameTextBox = new TextBox();
             moveUpBtn = new Button();
             closeBtn = new Button();
             moveDownBtn = new Button();
@@ -35,15 +35,15 @@ namespace FlowerRename
             // 
             // baseFileNameTextBox
             // 
-            baseFileNameTextBox.Location = new Point(10, 35);
+            baseFileNameTextBox.Location = new Point(116, 9);
             baseFileNameTextBox.Name = "baseFileNameTextBox";
-            baseFileNameTextBox.PlaceholderText = "插入字串";
+            baseFileNameTextBox.PlaceholderText = "插入前字串";
             baseFileNameTextBox.Size = new Size(278, 28);
             baseFileNameTextBox.TabIndex = 0;
             // 
             // startInsertNumberNumericUpDown
             // 
-            startInsertNumberNumericUpDown.Location = new Point(278, 74);
+            startInsertNumberNumericUpDown.Location = new Point(278, 51);
             startInsertNumberNumericUpDown.Name = "startInsertNumberNumericUpDown";
             startInsertNumberNumericUpDown.Size = new Size(80, 28);
             startInsertNumberNumericUpDown.TabIndex = 0;
@@ -54,14 +54,14 @@ namespace FlowerRename
             label1.AutoSize = true;
             label1.Location = new Point(10, 12);
             label1.Name = "label1";
-            label1.Size = new Size(73, 20);
+            label1.Size = new Size(89, 20);
             label1.TabIndex = 2;
-            label1.Text = "插入字串";
+            label1.Text = "插入前字串";
             // 
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(151, 78);
+            label2.Location = new Point(151, 55);
             label2.Name = "label2";
             label2.Size = new Size(121, 20);
             label2.TabIndex = 3;
@@ -70,19 +70,19 @@ namespace FlowerRename
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(311, 12);
+            label3.Location = new Point(9, 163);
             label3.Name = "label3";
-            label3.Size = new Size(99, 20);
+            label3.Size = new Size(89, 20);
             label3.TabIndex = 8;
-            label3.Text = "字串(無功能)";
+            label3.Text = "添加後字串";
             // 
-            // InsertFileNameTextBox
+            // AppendFileNameTextBox
             // 
-            InsertFileNameTextBox.Location = new Point(314, 35);
-            InsertFileNameTextBox.Name = "InsertFileNameTextBox";
-            InsertFileNameTextBox.PlaceholderText = "字串(無功能)";
-            InsertFileNameTextBox.Size = new Size(275, 28);
-            InsertFileNameTextBox.TabIndex = 7;
+            AppendFileNameTextBox.Location = new Point(119, 160);
+            AppendFileNameTextBox.Name = "AppendFileNameTextBox";
+            AppendFileNameTextBox.PlaceholderText = "添加字串";
+            AppendFileNameTextBox.Size = new Size(275, 28);
+            AppendFileNameTextBox.TabIndex = 7;
             // 
             // moveUpBtn
             // 
@@ -113,7 +113,7 @@ namespace FlowerRename
             // InsertNumberCheckBox
             // 
             InsertNumberCheckBox.AutoSize = true;
-            InsertNumberCheckBox.Location = new Point(14, 133);
+            InsertNumberCheckBox.Location = new Point(14, 93);
             InsertNumberCheckBox.Name = "InsertNumberCheckBox";
             InsertNumberCheckBox.Size = new Size(124, 24);
             InsertNumberCheckBox.TabIndex = 12;
@@ -125,7 +125,7 @@ namespace FlowerRename
             // 
             fromstartComboBox.FormattingEnabled = true;
             fromstartComboBox.Items.AddRange(new object[] { "從頭開始找", "從後面找起" });
-            fromstartComboBox.Location = new Point(10, 74);
+            fromstartComboBox.Location = new Point(10, 51);
             fromstartComboBox.Name = "fromstartComboBox";
             fromstartComboBox.Size = new Size(128, 28);
             fromstartComboBox.TabIndex = 13;
@@ -134,7 +134,7 @@ namespace FlowerRename
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(215, 167);
+            label4.Location = new Point(215, 127);
             label4.Name = "label4";
             label4.Size = new Size(89, 20);
             label4.TabIndex = 19;
@@ -143,7 +143,8 @@ namespace FlowerRename
             // incNumberNumericUpDown
             // 
             incNumberNumericUpDown.Enabled = false;
-            incNumberNumericUpDown.Location = new Point(305, 163);
+            incNumberNumericUpDown.Location = new Point(305, 123);
+            incNumberNumericUpDown.Maximum = new decimal(new int[] { 256, 0, 0, 0 });
             incNumberNumericUpDown.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             incNumberNumericUpDown.Name = "incNumberNumericUpDown";
             incNumberNumericUpDown.Size = new Size(80, 28);
@@ -154,7 +155,7 @@ namespace FlowerRename
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(418, 167);
+            label5.Location = new Point(418, 127);
             label5.Name = "label5";
             label5.Size = new Size(89, 20);
             label5.TabIndex = 17;
@@ -163,7 +164,7 @@ namespace FlowerRename
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(10, 167);
+            label6.Location = new Point(10, 127);
             label6.Name = "label6";
             label6.Size = new Size(89, 20);
             label6.TabIndex = 16;
@@ -172,7 +173,7 @@ namespace FlowerRename
             // startNumberNumericUpDown
             // 
             startNumberNumericUpDown.Enabled = false;
-            startNumberNumericUpDown.Location = new Point(100, 163);
+            startNumberNumericUpDown.Location = new Point(100, 123);
             startNumberNumericUpDown.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             startNumberNumericUpDown.Name = "startNumberNumericUpDown";
             startNumberNumericUpDown.Size = new Size(80, 28);
@@ -183,7 +184,7 @@ namespace FlowerRename
             // paddingNumericUpDown
             // 
             paddingNumericUpDown.Enabled = false;
-            paddingNumericUpDown.Location = new Point(508, 163);
+            paddingNumericUpDown.Location = new Point(508, 123);
             paddingNumericUpDown.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             paddingNumericUpDown.Name = "paddingNumericUpDown";
             paddingNumericUpDown.Size = new Size(80, 28);
@@ -207,13 +208,13 @@ namespace FlowerRename
             Controls.Add(closeBtn);
             Controls.Add(moveDownBtn);
             Controls.Add(label3);
-            Controls.Add(InsertFileNameTextBox);
+            Controls.Add(AppendFileNameTextBox);
             Controls.Add(label2);
             Controls.Add(label1);
             Controls.Add(baseFileNameTextBox);
             Controls.Add(startInsertNumberNumericUpDown);
             Name = "InsertRuleControl";
-            Size = new Size(598, 200);
+            Size = new Size(598, 196);
             ((System.ComponentModel.ISupportInitialize)startInsertNumberNumericUpDown).EndInit();
             ((System.ComponentModel.ISupportInitialize)incNumberNumericUpDown).EndInit();
             ((System.ComponentModel.ISupportInitialize)startNumberNumericUpDown).EndInit();
@@ -223,7 +224,7 @@ namespace FlowerRename
         }
 
         private Label label3;
-        public TextBox InsertFileNameTextBox;
+        public TextBox AppendFileNameTextBox;
         public Button moveUpBtn;
         public Button closeBtn;
         public Button moveDownBtn;

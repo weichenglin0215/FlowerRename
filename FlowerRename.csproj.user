@@ -10,6 +10,9 @@
     <Compile Update="Form_FlowerRename.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="Rules\DeleteRule.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Update="Rules\GroupRule.cs">
       <SubType>UserControl</SubType>
     </Compile>

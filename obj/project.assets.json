@@ -12,7 +12,7 @@
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
-    "version": "0.4.3",
+    "version": "1.0.0",
     "restore": {
       "projectUniqueName": "C:\\3D_prj\\VS_2022_prj\\FlowerRename\\FlowerRename.csproj",
       "projectName": "FlowerRename",

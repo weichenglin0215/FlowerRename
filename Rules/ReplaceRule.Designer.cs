@@ -21,6 +21,7 @@ namespace FlowerRename
             moveDownBtn = new Button();
             replaceAllStringCheckBox = new CheckBox();
             fromstartComboBox = new ComboBox();
+            ordinalIgnoreCaseCheckBox = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)startNumberNumericUpDown).BeginInit();
             SuspendLayout();
             // 
@@ -36,12 +37,11 @@ namespace FlowerRename
             // 
             startNumberNumericUpDown.Enabled = false;
             startNumberNumericUpDown.Location = new Point(241, 74);
-            startNumberNumericUpDown.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            startNumberNumericUpDown.Maximum = new decimal(new int[] { 128, 0, 0, 0 });
             startNumberNumericUpDown.Name = "startNumberNumericUpDown";
             startNumberNumericUpDown.Size = new Size(80, 28);
             startNumberNumericUpDown.TabIndex = 0;
             startNumberNumericUpDown.TextAlign = HorizontalAlignment.Right;
-            startNumberNumericUpDown.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // label1
             // 
@@ -128,10 +128,23 @@ namespace FlowerRename
             fromstartComboBox.TabIndex = 13;
             fromstartComboBox.Text = "從頭開始找";
             // 
+            // ordinalIgnoreCaseCheckBox
+            // 
+            ordinalIgnoreCaseCheckBox.AutoSize = true;
+            ordinalIgnoreCaseCheckBox.Checked = true;
+            ordinalIgnoreCaseCheckBox.CheckState = CheckState.Checked;
+            ordinalIgnoreCaseCheckBox.Location = new Point(336, 76);
+            ordinalIgnoreCaseCheckBox.Name = "ordinalIgnoreCaseCheckBox";
+            ordinalIgnoreCaseCheckBox.Size = new Size(108, 24);
+            ordinalIgnoreCaseCheckBox.TabIndex = 14;
+            ordinalIgnoreCaseCheckBox.Text = "忽略大小寫";
+            ordinalIgnoreCaseCheckBox.UseVisualStyleBackColor = true;
+            // 
             // ReplaceRuleControl
             // 
             BackColor = Color.AliceBlue;
             BorderStyle = BorderStyle.Fixed3D;
+            Controls.Add(ordinalIgnoreCaseCheckBox);
             Controls.Add(fromstartComboBox);
             Controls.Add(replaceAllStringCheckBox);
             Controls.Add(moveUpBtn);
@@ -158,5 +171,6 @@ namespace FlowerRename
         public Button moveDownBtn;
         public CheckBox replaceAllStringCheckBox;
         public ComboBox fromstartComboBox;
+        public CheckBox ordinalIgnoreCaseCheckBox;
     }
 }

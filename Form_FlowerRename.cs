@@ -706,6 +706,20 @@ namespace FlowerRename
                     _ruleManager.AddRuleControlPair(InsertRule, InsertRuleControl, RuleID); // 添加或更新規則
                     RuleID++;
                     break;
+                case "刪除文字(根據位置)":
+                    var DeleteRuleControl = new DeleteRuleControl();
+                    DeleteRuleControl.RuleID = RuleID;
+                    Debug.WriteLine("Add DeleteRuleControl RuleID = " + RuleID);
+                    DeleteRuleControl.Dock = DockStyle.Top; // 設置停靠方式
+                    ruleContainer.Controls.Add(DeleteRuleControl); // 將控制項添加到Form_FlowerRename容器中
+                    DeleteRuleControl._Form_FlowerRename = this;
+                    //將新增的numberingRuleControl在ruleContainer的位置移到最上方
+                    ruleContainer.Controls.SetChildIndex(DeleteRuleControl, 0);
+                    DeleteRuleControl.Focus();                    // 創建 RuleManager 中的 NumberingRule
+                    var DeleteRule = new DeleteRule(DeleteRuleControl);
+                    _ruleManager.AddRuleControlPair(DeleteRule, DeleteRuleControl, RuleID); // 添加或更新規則
+                    RuleID++;
+                    break;
                 case "群組化(AI產圖方便比對)":
                     var GroupRuleControl = new GroupRuleControl();
                     GroupRuleControl.RuleID = RuleID;
