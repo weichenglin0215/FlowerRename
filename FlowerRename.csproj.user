@@ -16,16 +16,10 @@
     <Compile Update="Rules\GroupRule.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Update="Rules\InsertRule.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
     <Compile Update="Rules\NumberingRule.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Update="Rules\ReplaceRule.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Update="Rules\RuleBase.cs">
       <SubType>UserControl</SubType>
     </Compile>
   </ItemGroup>

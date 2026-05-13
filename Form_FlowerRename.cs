@@ -1,57 +1,57 @@
 using System.Diagnostics;
-using System.Windows.Forms;
 
 namespace FlowerRename
 {
+    /// <summary>
+    /// FlowerRename 的主視窗。
+    /// 負責：檔案清單（fileListView）的管理、規則 UI 的建立與移除、
+    /// 執行批次更名、Undo 復原，以及所有按鈕與拖放的事件處理。
+    /// </summary>
     public partial class Form_FlowerRename : Form
     {
-        //private FileListManager _fileListManager; //不想用這個了，很麻煩，檔案清單就直接使用fileListView
+        // 規則管理器：負責維護所有作用中的命名規則並計算新檔名預覽
         private RuleManager? _ruleManager;
-        private UndoManager _undoManager = new UndoManager(); // UNDO管理器
-        private Panel? _ruleContainer;
-        private int RuleID = 0; //規則的ID只是用來區分規則，避免重複名稱的規則被誤刪除
-        ListViewColumnSorter m_LvwColumnSorter = new ListViewColumnSorter();
+
+        // 復原管理器：記錄每次成功的更名操作，供 Undo 使用
+        private readonly UndoManager _undoManager = new UndoManager();
+
+        // 規則 ID 計數器：每新增一個規則遞增，確保 ID 唯一（即使規則名稱相同也不會誤刪）
+        private int _nextRuleID = 0;
+
+        // ListView 欄位排序器（點擊欄位標題時使用）
+        private readonly ListViewColumnSorter _lvwColumnSorter = new ListViewColumnSorter();
 
         public Form_FlowerRename()
         {
             InitializeComponent();
             fileListView.Items.Clear();
             HideButtons();
-            UpdateUndoButtonState(); // 初始化UNDO按鈕狀態
-            fileListView.SelectedIndexChanged += fileListView_SelectedIndexChanged;
+            UpdateUndoButtonState();
             fileListView.DoubleClick += fileListView_DoubleClick;
             UpdateStatusLabel("啟動 FlowerRename");
         }
-        private void UpdateStatusLabel(string news)
+
+        // ───────────────────────────────────────────────
+        //  狀態列更新
+        // ───────────────────────────────────────────────
+
+        /// <summary>
+        /// 更新底部狀態列，顯示總檔案數、選取數量，以及最新的操作訊息。
+        /// </summary>
+        private void UpdateStatusLabel(string message)
         {
-            int totalCount = fileListView.Items.Count;
-            int selectedCount = fileListView.SelectedItems.Count;
-            toolStripStatusLabel_FilesInfo.Text = $"檔案數量：{totalCount}，被選取項目數量：{selectedCount}";
-            toolStripStatusLabel_News.Text = $"{news}";
+            toolStripStatusLabel_FilesInfo.Text =
+                $"檔案數量：{fileListView.Items.Count}，被選取項目數量：{fileListView.SelectedItems.Count}";
+            toolStripStatusLabel_News.Text = message;
         }
 
-        private void fileListView_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            //UpdateStatusLabel("點擊項目");
-        }
+        // ───────────────────────────────────────────────
+        //  UI 顯示切換（載入檔案前隱藏大部分按鈕）
+        // ───────────────────────────────────────────────
 
-        private void fileListView_DoubleClick(object sender, EventArgs e)
-        {
-            if (fileListView.SelectedItems.Count > 0)
-            {
-                ListViewItem item = fileListView.SelectedItems[0];
-                string filePath = Path.Combine(item.SubItems[4].Text, item.SubItems[0].Text);
-                try
-                {
-                    Process.Start(new ProcessStartInfo(filePath) { UseShellExecute = true });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"無法開啟檔案: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-        }
-
+        /// <summary>
+        /// 隱藏所有操作按鈕（初始狀態，等待使用者載入檔案）。
+        /// </summary>
         public void HideButtons()
         {
             btnAddFiles.Visible = false;
@@ -64,6 +64,10 @@ namespace FlowerRename
             buttonRename.Visible = false;
             buttonUndo.Visible = false;
         }
+
+        /// <summary>
+        /// 顯示所有操作按鈕（載入檔案後呼叫）。
+        /// </summary>
         public void ShowAllButtons()
         {
             btnOpenFiles.Visible = true;
@@ -77,779 +81,461 @@ namespace FlowerRename
             comboBoxAddRule.SelectedIndex = 0;
             menuStripAddRule.Visible = true;
             buttonRename.Visible = true;
-            buttonUndo.Visible = true; // UNDO按鈕始終顯示，但啟用狀態由 UpdateUndoButtonState() 控制
-            UpdateUndoButtonState(); // 更新UNDO按鈕啟用狀態
+            buttonUndo.Visible = true;
+            UpdateUndoButtonState();
         }
-        public void InitializeRules_AddDefaultRule()
+
+        // ───────────────────────────────────────────────
+        //  檔案清單的讀取與更新（供 RuleManager 呼叫）
+        // ───────────────────────────────────────────────
+
+        /// <summary>
+        /// 取得 ListView 中所有項目的「原始完整路徑」陣列（目錄 + 原始檔名）。
+        /// </summary>
+        public string[] GetFileList()
         {
-            if (_ruleManager != null && _ruleManager.GetRuleControlPair().Count == 0)
-            {
-                Debug.WriteLine("_ruleManager.Count: " + _ruleManager.GetRuleControlPair().Count.ToString());
-            }
+            return fileListView.Items
+                .Cast<ListViewItem>()
+                .Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[0].Text))
+                .ToArray();
         }
-        public void UpdateFileListView(string[] newFileNames)
+
+        /// <summary>
+        /// 將 RuleManager 計算後的新檔名陣列寫入 ListView 的「新檔名」欄位（SubItems[1]）。
+        /// </summary>
+        /// <param name="newFileNames">僅含檔名（不含路徑）的新檔名陣列，長度應與清單項目數相符</param>
+        public void SetFileList(string[] newFileNames)
         {
             fileListView.BeginUpdate();
-            //string[] originalNames = fileListView.Items.Cast<ListViewItem>().Select(item => item.Text).ToArray();
-            //string[] newNames = _ruleManager.ProcessNewFileName(originalNames);
-            // 確保 newNames 的長度與 fileListView.Items.Count 相同
             int count = Math.Min(fileListView.Items.Count, newFileNames.Length);
             for (int i = 0; i < count; i++)
             {
-                Debug.WriteLine("newNames[" + i + "]: " + newFileNames[i]);
-                // 更新 ListViewItem 的 SubItems[1] 為新的檔名
+                Debug.WriteLine($"SetFileList[{i}]: {newFileNames[i]}");
                 fileListView.Items[i].SubItems[1].Text = newFileNames[i];
             }
             fileListView.EndUpdate();
         }
+
+        // ───────────────────────────────────────────────
+        //  拖放事件
+        // ───────────────────────────────────────────────
+
         private void Form_FlowerRename_DragEnter(object sender, DragEventArgs e)
         {
+            // 只接受包含檔案/目錄的拖放操作
             if (e.Data?.GetDataPresent(DataFormats.FileDrop) == true)
             {
-                var data = e.Data.GetData(DataFormats.FileDrop);
-                if (data is string[] paths && paths != null)
-                {
-                    // 檢查是否至少有一個檔案或目錄
-                    if (paths.Any(path => System.IO.File.Exists(path) || System.IO.Directory.Exists(path)))
-                    {
-                        e.Effect = DragDropEffects.Copy;
-                    }
-                    else
-                    {
-                        e.Effect = DragDropEffects.None;
-                    }
-                }
-                else
-                {
-                    e.Effect = DragDropEffects.None;
-                }
+                var paths = e.Data.GetData(DataFormats.FileDrop) as string[];
+                bool hasValid = paths?.Any(p => File.Exists(p) || Directory.Exists(p)) == true;
+                e.Effect = hasValid ? DragDropEffects.Copy : DragDropEffects.None;
             }
             else
             {
                 e.Effect = DragDropEffects.None;
             }
         }
+
         private void Form_FlowerRename_DragDrop(object sender, DragEventArgs e)
         {
-            if (e.Data?.GetDataPresent(DataFormats.FileDrop) == true)
-            {
-                var data = e.Data.GetData(DataFormats.FileDrop);
-                if (data is string[] paths && paths != null)
-                {
-                    // 先處理目錄
-                    foreach (var dir in paths.Where(System.IO.Directory.Exists))
-                    {
-                        DragDropOpenDir(dir);
-                    }
+            if (e.Data?.GetDataPresent(DataFormats.FileDrop) != true)
+                return;
 
-                    // 再處理檔案
-                    var files = paths.Where(System.IO.File.Exists).ToArray();
-                    if (files.Length > 0)
-                    {
-                        Debug.WriteLine("files " + files[0]);
-                        DragDropOpenFiles(files);
-                    }
-                }
-            }
+            var paths = e.Data.GetData(DataFormats.FileDrop) as string[];
+            if (paths == null) return;
+
+            // 先處理拖入的目錄，再處理拖入的檔案（都以「追加」方式加入，不清空現有清單）
+            foreach (var dir in paths.Where(Directory.Exists))
+                DragDropOpenDir(dir);
+
+            var files = paths.Where(File.Exists).ToArray();
+            if (files.Length > 0)
+                DragDropOpenFiles(files);
         }
+
+        // ───────────────────────────────────────────────
+        //  開啟檔案 / 開啟資料夾（清空現有清單後重新載入）
+        // ───────────────────────────────────────────────
 
         private void btnOpenFiles_Click(object sender, EventArgs e)
         {
-            int addedCount = 0;
-            fileListView.BeginUpdate();
-            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            using var dlg = new OpenFileDialog
             {
-                // 設定對話框屬性
-                openFileDialog.Title = "選擇檔案";
-                openFileDialog.Filter = "所有檔案 (*.*)|*.*"; // 可以根據需要修改檔案類型
-                openFileDialog.Multiselect = true; // 允許多選
+                Title = "選擇檔案",
+                Filter = "所有檔案 (*.*)|*.*",
+                Multiselect = true
+            };
 
-                // 顯示對話框並檢查使用者是否選擇了檔案
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    // 清空現有的項目
-                    fileListView.Items.Clear();
-                    //addedCount = openFileDialog.FileNames.Length;
-                    // 將選擇的檔案添加到 fileListView
-                    foreach (string file in openFileDialog.FileNames)
-                    {
-                        if (AddFileToListView(file, checkDuplicate: false)) addedCount++;
-                    }
-                    if (fileListView.Items.Count > 0 && (_ruleManager == null || _ruleManager.GetRuleControlPair().Count == 0))
-                    {
-                        _ruleManager = new RuleManager(this); // 確保初始化
-                    }
-                    if (fileListView.Items.Count > 0)
-                    {
-                        ShowAllButtons();
-                        if (_ruleManager != null)
-                        {
-                            _ruleManager.GetOriginalFileNames();
-                        }
-                    }
-                    fileListView.EndUpdate();
-                    UpdateStatusLabel("清除原有清單項目並新增 " + addedCount + " 檔案");
+            if (dlg.ShowDialog() != DialogResult.OK) return;
 
-                }
-            }
+            fileListView.BeginUpdate();
+            fileListView.Items.Clear();
+
+            int addedCount = 0;
+            foreach (string file in dlg.FileNames)
+                if (AddFileToListView(file, checkDuplicate: false)) addedCount++;
+
+            OnFilesLoaded();
+            fileListView.EndUpdate();
+            UpdateStatusLabel($"清除原有清單並新增 {addedCount} 個檔案");
         }
 
         private void btnOpenDir_Click(object sender, EventArgs e)
         {
-            int addedCount = 0;
+            using var dlg = new FolderBrowserDialog { Description = "選擇資料夾" };
+            if (dlg.ShowDialog() != DialogResult.OK) return;
+
             fileListView.BeginUpdate();
-            using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
-            {
-                folderBrowserDialog.Description = "選擇資料夾";
+            fileListView.Items.Clear();
 
-                if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
-                {
-                    string selectedPath = folderBrowserDialog.SelectedPath;
-                    fileListView.Items.Clear();
-
-                    // 獲取資料夾中的所有檔案
-                    try
-                    {
-                        var files = System.IO.Directory.GetFiles(selectedPath);
-                        //addedCount = files.Length;
-                        foreach (var file in files)
-                        {
-                            if (AddFileToListView(file, checkDuplicate: false)) addedCount++;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"讀取資料夾時發生錯誤：{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                    if (fileListView.Items.Count > 0 && (_ruleManager == null || _ruleManager.GetRuleControlPair().Count == 0))
-                    {
-                        _ruleManager = new RuleManager(this); // 確保初始化
-                    }
-                    if (fileListView.Items.Count > 0)
-                    {
-                        ShowAllButtons();
-                        if (_ruleManager != null)
-                        {
-                            _ruleManager.GetOriginalFileNames();
-                        }
-                    }
-                    fileListView.EndUpdate();
-                    UpdateStatusLabel("清除原有清單項目並新增 " + addedCount + " 檔案");
-
-                }
-            }
-        }
-
-        private void DragDropOpenDir(string path)
-        {
             int addedCount = 0;
-            fileListView.BeginUpdate();
             try
             {
-                // 獲取資料夾中的所有檔案
-                var files = System.IO.Directory.GetFiles(path);
-                //addedCount = files.Length;
-                foreach (var file in files)
-                {
-                    if (AddFileToListView(file, checkDuplicate: true)) addedCount++;
-                }
+                foreach (var file in Directory.GetFiles(dlg.SelectedPath))
+                    if (AddFileToListView(file, checkDuplicate: false)) addedCount++;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"拖放開啟資料夾時發生錯誤: {path}, 錯誤訊息: {ex.Message}");
-                MessageBox.Show($"讀取資料夾時發生錯誤：{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"讀取資料夾時發生錯誤：{ex.Message}", "錯誤",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            if (fileListView.Items.Count > 0 && (_ruleManager == null || _ruleManager.GetRuleControlPair().Count == 0))
-            {
-                _ruleManager = new RuleManager(this); // 確保初始化
-            }
-            if (fileListView.Items.Count > 0)
-            {
-                ShowAllButtons();
-                if (_ruleManager != null)
-                {
-                    _ruleManager.GetOriginalFileNames();
-                }
-            }
+
+            OnFilesLoaded();
             fileListView.EndUpdate();
-            UpdateStatusLabel("新增 " + addedCount + " 檔案");
+            UpdateStatusLabel($"清除原有清單並新增 {addedCount} 個檔案");
         }
 
-        private void DragDropOpenFiles(string[] files)
-        {
-            int addedCount = 0;
-            //addedCount = files.Length;
-            fileListView.BeginUpdate();
-            foreach (var file in files)
-            {
-                Debug.WriteLine("file " + file);
-                if (AddFileToListView(file, checkDuplicate: true))
-                {
-                    addedCount++;
-                    Debug.WriteLine("file add " + file);
-                }
-            }
-            if (fileListView.Items.Count > 0 && (_ruleManager == null || _ruleManager.GetRuleControlPair().Count == 0))
-            {
-                _ruleManager = new RuleManager(this); // 確保初始化
-            }
-            if (fileListView.Items.Count > 0)
-            {
-                ShowAllButtons();
-                if (_ruleManager != null)
-                {
-                    _ruleManager.GetOriginalFileNames();
-                }
-            }
-            fileListView.EndUpdate();
-            UpdateStatusLabel("新增 " + addedCount + " 檔案");
-        }
+        // ───────────────────────────────────────────────
+        //  追加檔案 / 追加資料夾（保留現有清單，僅加入新項目）
+        // ───────────────────────────────────────────────
 
         private void btnAddFiles_Click(object sender, EventArgs e)
         {
-            int addedCount = 0;
-            fileListView.BeginUpdate();
-            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            using var dlg = new OpenFileDialog
             {
-                openFileDialog.Title = "選擇檔案";
-                openFileDialog.Filter = "所有檔案 (*.*)|*.*";
-                openFileDialog.Multiselect = true;
+                Title = "選擇檔案",
+                Filter = "所有檔案 (*.*)|*.*",
+                Multiselect = true
+            };
 
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    //addedCount = openFileDialog.FileNames.Length;
-                    foreach (string file in openFileDialog.FileNames)
-                    {
-                        if (AddFileToListView(file, checkDuplicate: true)) addedCount++;
-                    }
-                }
-            }
+            if (dlg.ShowDialog() != DialogResult.OK) return;
+
+            fileListView.BeginUpdate();
+            int addedCount = 0;
+            foreach (string file in dlg.FileNames)
+                if (AddFileToListView(file, checkDuplicate: true)) addedCount++;
+
+            OnFilesLoaded();
             fileListView.EndUpdate();
-            UpdateStatusLabel("新增 " + addedCount + " 檔案");
+            UpdateStatusLabel($"新增 {addedCount} 個檔案");
         }
 
         private void btnAddDir_Click(object sender, EventArgs e)
         {
+            using var dlg = new FolderBrowserDialog { Description = "選擇資料夾" };
+            if (dlg.ShowDialog() != DialogResult.OK) return;
+
             fileListView.BeginUpdate();
             int addedCount = 0;
-            using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
+            try
             {
-                folderBrowserDialog.Description = "選擇資料夾";
-
-                if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
-                {
-                    string selectedPath = folderBrowserDialog.SelectedPath;
-
-                    // 獲取資料夾中的所有檔案
-                    try
-                    {
-                        var files = System.IO.Directory.GetFiles(selectedPath);
-                        addedCount = files.Length;
-                        foreach (var file in files)
-                        {
-                            AddFileToListView(file, checkDuplicate: true);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"讀取資料夾時發生錯誤：{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
+                foreach (var file in Directory.GetFiles(dlg.SelectedPath))
+                    if (AddFileToListView(file, checkDuplicate: true)) addedCount++;
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"讀取資料夾時發生錯誤：{ex.Message}", "錯誤",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            OnFilesLoaded();
             fileListView.EndUpdate();
-            UpdateStatusLabel("新增 " + addedCount + " 檔案");
+            UpdateStatusLabel($"新增 {addedCount} 個檔案");
         }
+
+        // ───────────────────────────────────────────────
+        //  拖放載入（內部輔助方法）
+        // ───────────────────────────────────────────────
+
+        private void DragDropOpenDir(string path)
+        {
+            fileListView.BeginUpdate();
+            int addedCount = 0;
+            try
+            {
+                foreach (var file in Directory.GetFiles(path))
+                    if (AddFileToListView(file, checkDuplicate: true)) addedCount++;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"拖放開啟資料夾失敗: {path} → {ex.Message}");
+                MessageBox.Show($"讀取資料夾時發生錯誤：{ex.Message}", "錯誤",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            OnFilesLoaded();
+            fileListView.EndUpdate();
+            UpdateStatusLabel($"新增 {addedCount} 個檔案");
+        }
+
+        private void DragDropOpenFiles(string[] files)
+        {
+            fileListView.BeginUpdate();
+            int addedCount = 0;
+            foreach (var file in files)
+                if (AddFileToListView(file, checkDuplicate: true)) addedCount++;
+
+            OnFilesLoaded();
+            fileListView.EndUpdate();
+            UpdateStatusLabel($"新增 {addedCount} 個檔案");
+        }
+
+        /// <summary>
+        /// 每次有新檔案加入清單後的共用後處理：
+        /// 若 RuleManager 尚未建立則初始化，並顯示所有操作按鈕。
+        /// </summary>
+        private void OnFilesLoaded()
+        {
+            if (fileListView.Items.Count == 0) return;
+
+            if (_ruleManager == null)
+                _ruleManager = new RuleManager(this);
+            else
+                _ruleManager.GetOriginalFileNames(); // 重新同步原始檔名
+
+            ShowAllButtons();
+        }
+
+        // ───────────────────────────────────────────────
+        //  清除清單項目
+        // ───────────────────────────────────────────────
 
         private void btnClearAll_Click(object sender, EventArgs e)
         {
-            fileListView.Items.Clear(); // 清空 ListView 中的所有項目
-            _undoManager.Clear(); // 清除UNDO歷史記錄
+            fileListView.Items.Clear();
+            _undoManager.Clear();       // 清空清單時一併清除 Undo 歷史
             HideButtons();
             UpdateStatusLabel("清除所有項目");
         }
+
         private void btnClearSelected_Click(object sender, EventArgs e)
         {
-            bool hasCheckedItems = false;
+            // 檢查是否有選取的項目
+            bool hasSelected = fileListView.Items.Cast<ListViewItem>().Any(item => item.Selected);
+            if (!hasSelected)
+            {
+                MessageBox.Show("您沒有選取任何項目。\n\n請先選取要移除的項目再清除。",
+                    "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 從後往前刪除，避免索引位移問題
             int removedCount = 0;
-
-            // 檢查是否有勾選的項目
-            foreach (ListViewItem item in fileListView.Items)
-            {
-                if (item.Selected)
-                {
-                    hasCheckedItems = true;
-                    break; // 找到勾選的項目後可以提前退出迴圈
-                }
-            }
-
-            // 如果沒有勾選的項目，顯示警告對話框
-            if (!hasCheckedItems)
-            {
-                MessageBox.Show("您沒有勾選任何項目。\n\n請先勾選要刪除的項目再清除。", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return; // 退出方法
-            }
-
-            // 從後往前刪除已勾選的項目，以避免索引錯誤
             for (int i = fileListView.Items.Count - 1; i >= 0; i--)
             {
-                ListViewItem item = fileListView.Items[i];
-                if (item.Selected) // 檢查項目是否被勾選
+                if (fileListView.Items[i].Selected)
                 {
-                    fileListView.Items.Remove(item);
+                    fileListView.Items.RemoveAt(i);
                     removedCount++;
                 }
             }
+
             if (fileListView.Items.Count == 0)
-            {
                 HideButtons();
-            }
-            //toolStripStatusLabel_News.Text = "已清除所選 " + removedCount + " 項目";
-            UpdateStatusLabel("已清除所選 " + removedCount + " 項目");
+
+            UpdateStatusLabel($"已移除所選 {removedCount} 個項目");
         }
+
+        // ───────────────────────────────────────────────
+        //  ListView 項目的新增與重複檢查
+        // ───────────────────────────────────────────────
+
         /// <summary>
-        /// 將檔案添加到 ListView 的共用方法
+        /// 將單一檔案加入 ListView。
+        /// SubItems 欄位配置：[0] 原始檔名、[1] 新檔名（預覽）、[2] 大小（Bytes）、[3] 修改日期、[4] 所在目錄
         /// </summary>
         /// <param name="filePath">檔案完整路徑</param>
-        /// <param name="checkDuplicate">是否檢查重複檔案</param>
-        /// <returns>是否成功添加</returns>
-        private bool AddFileToListView(string filePath, bool checkDuplicate = true)
+        /// <param name="checkDuplicate">是否檢查重複（追加時為 true，重新載入時為 false）</param>
+        /// <returns>成功加入回傳 true；檔案不存在或重複則回傳 false</returns>
+        private bool AddFileToListView(string filePath, bool checkDuplicate)
         {
             try
             {
-                if (!System.IO.File.Exists(filePath))
-                {
+                if (!File.Exists(filePath)) return false;
+
+                var info = new FileInfo(filePath);
+
+                // 追加模式下檢查同目錄同檔名是否已存在
+                if (checkDuplicate && IsFileInListView(info.Name, info.DirectoryName ?? ""))
                     return false;
-                }
 
-                var fileInfo = new System.IO.FileInfo(filePath);
-                string originalFileName = fileInfo.Name;
-                string newFileName = originalFileName;
-                string fileSize = fileInfo.Length.ToString();
-                string fileDate = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
-                string fileDirectory = fileInfo.DirectoryName ?? string.Empty;
-
-                // 檢查檔案是否已存在
-                if (checkDuplicate && IsFileInListView(originalFileName, fileDirectory))
-                {
-                    return false;
-                }
-
-                ListViewItem item = new ListViewItem(originalFileName);
-                item.SubItems.Add(newFileName);
-                item.SubItems.Add(fileSize);
-                item.SubItems.Add(fileDate);
-                item.SubItems.Add(fileDirectory);
+                var item = new ListViewItem(info.Name);
+                item.SubItems.Add(info.Name);                                       // [1] 新檔名（初始等於原始檔名）
+                item.SubItems.Add(info.Length.ToString());                          // [2] 檔案大小
+                item.SubItems.Add(info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")); // [3] 修改日期
+                item.SubItems.Add(info.DirectoryName ?? string.Empty);              // [4] 所在目錄
                 fileListView.Items.Add(item);
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"添加檔案到 ListView 時發生錯誤: {filePath}, 錯誤訊息: {ex.Message}");
+                Debug.WriteLine($"AddFileToListView 失敗: {filePath} → {ex.Message}");
                 return false;
             }
         }
 
-        private bool IsFileInListView(string fileName, string fileDirectory)
+        /// <summary>
+        /// 檢查指定的檔名與目錄組合是否已存在於 ListView 中（不分大小寫）。
+        /// </summary>
+        private bool IsFileInListView(string fileName, string directory)
         {
-            foreach (ListViewItem item in fileListView.Items)
-            {
-                if (item.Text.Equals(fileName, StringComparison.OrdinalIgnoreCase) && item.SubItems[4].Text.Equals(fileDirectory, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true; // 檔案已存在
-                }
-            }
-            return false; // 檔案不存在
+            return fileListView.Items.Cast<ListViewItem>()
+                .Any(item =>
+                    item.Text.Equals(fileName, StringComparison.OrdinalIgnoreCase) &&
+                    item.SubItems[4].Text.Equals(directory, StringComparison.OrdinalIgnoreCase));
         }
 
-
-        public string[] GetFileList()
-        {
-            //回傳fileListView所有項目的原始檔案路徑和原始檔案名稱
-            return fileListView.Items.Cast<ListViewItem>().Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[0].Text)).ToArray();
-        }
-        public string[] GetSelectedFileList()
-        {
-            //取得fileListView的原始檔案路徑和原始檔案名稱
-            return fileListView.Items.Cast<ListViewItem>().Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[0].Text)).ToArray();
-        }
-
-        public void SetFileList(string[] newFileNames)
-        {
-            fileListView.BeginUpdate();
-            //把newFileNames設定給fileListView的SubItems[1]新檔名
-            int count = Math.Min(fileListView.Items.Count, newFileNames.Length);
-            for (int i = 0; i < count; i++)
-            {
-                Debug.WriteLine("newNames[" + i + "]: " + newFileNames[i]);
-                // 更新 ListViewItem 的 SubItems[1] 為新的檔名
-                fileListView.Items[i].SubItems[1].Text = newFileNames[i];
-            }
-            fileListView.EndUpdate();
-        }
+        // ───────────────────────────────────────────────
+        //  執行更名
+        // ───────────────────────────────────────────────
 
         private void buttonRename_Click(object sender, EventArgs e)
         {
-            // 檢查是否有添加更名功能
+            // 必須先加入至少一個規則才能執行更名
             if (_ruleManager == null || _ruleManager.GetRuleControlPair().Count == 0)
             {
-                MessageBox.Show("請先在上方添加更名功能（例如：重新編號、置換指定文字等）", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("請先在上方新增命名規則（例如：重新編號、置換指定文字等）",
+                    "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-
             RenameFiles();
         }
 
+        /// <summary>
+        /// 執行批次更名：讀取 ListView 的原始檔名與新檔名，逐一更名磁碟上的實際檔案，
+        /// 成功後更新 ListView 顯示，並將操作記錄推入 Undo 堆疊。
+        /// </summary>
         private void RenameFiles()
         {
-            //取出fileListView的原始檔案路徑和原始檔案名稱，將該檔案的檔名更改成fileListView的SubItems[1]新檔名
-            string[] originalFileNames = fileListView.Items.Cast<ListViewItem>().Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[0].Text)).ToArray();
-            //新檔案名稱必須包含原始檔案路徑
-            string[] newFileNames = fileListView.Items.Cast<ListViewItem>().Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[1].Text)).ToArray();
-            int successCount = 0;
-            int failCount = 0;
-            List<string> failedFiles = new List<string>();
+            // 取得原始完整路徑 與 新完整路徑
+            var originalPaths = fileListView.Items.Cast<ListViewItem>()
+                .Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[0].Text))
+                .ToArray();
+            var newPaths = fileListView.Items.Cast<ListViewItem>()
+                .Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[1].Text))
+                .ToArray();
 
-            // 創建更名操作記錄
-            RenameOperation operation = new RenameOperation();
+            int successCount = 0, failCount = 0;
+            var failedMessages = new List<string>();
+            var operation = new RenameOperation();
 
-            //要真的修改磁碟機中的檔案名稱
-            for (int i = 0; i < originalFileNames.Length; i++)
+            for (int i = 0; i < originalPaths.Length; i++)
             {
-                RenameItem item = new RenameItem
+                var record = new RenameItem
                 {
-                    OriginalPath = originalFileNames[i],
-                    NewPath = newFileNames[i],
+                    OriginalPath = originalPaths[i],
+                    NewPath = newPaths[i],
                     ListViewIndex = i
                 };
 
                 try
                 {
-                    // 檢查新檔案名稱是否已存在
-                    if (System.IO.File.Exists(newFileNames[i]))
+                    // 目標檔案已存在 → 無法覆蓋
+                    if (File.Exists(newPaths[i]))
                     {
-                        item.Success = false;
-                        item.ErrorMessage = "目標檔案已存在";
-                        failedFiles.Add($"{originalFileNames[i]} -> {newFileNames[i]} (目標檔案已存在)");
+                        record.Success = false;
+                        record.ErrorMessage = "目標檔案已存在";
+                        failedMessages.Add($"{originalPaths[i]} → {newPaths[i]}（目標檔案已存在）");
                         failCount++;
-                        operation.Items.Add(item);
+                        operation.Items.Add(record);
                         continue;
                     }
 
-                    // 檢查原始檔案是否存在
-                    if (!System.IO.File.Exists(originalFileNames[i]))
+                    // 原始檔案不存在（可能已被手動刪除）
+                    if (!File.Exists(originalPaths[i]))
                     {
-                        item.Success = false;
-                        item.ErrorMessage = "原始檔案不存在";
-                        failedFiles.Add($"{originalFileNames[i]} (原始檔案不存在)");
+                        record.Success = false;
+                        record.ErrorMessage = "原始檔案不存在";
+                        failedMessages.Add($"{originalPaths[i]}（原始檔案不存在）");
                         failCount++;
-                        operation.Items.Add(item);
+                        operation.Items.Add(record);
                         continue;
                     }
 
-                    // 執行檔案更名
-                    System.IO.File.Move(originalFileNames[i], newFileNames[i]);
+                    File.Move(originalPaths[i], newPaths[i]);
 
-                    // 如果更名成功沒有出錯，則把fileListView的原始檔名更成新檔名
+                    // 更名成功：同步更新 ListView 的原始檔名欄位
                     fileListView.Items[i].SubItems[0].Text = fileListView.Items[i].SubItems[1].Text;
-                    item.Success = true;
+                    record.Success = true;
                     successCount++;
-                    operation.Items.Add(item);
+                    operation.Items.Add(record);
                 }
                 catch (UnauthorizedAccessException ex)
                 {
-                    item.Success = false;
-                    item.ErrorMessage = $"權限不足: {ex.Message}";
-                    failedFiles.Add($"{originalFileNames[i]} -> {newFileNames[i]} (權限不足: {ex.Message})");
+                    record.Success = false;
+                    record.ErrorMessage = $"權限不足：{ex.Message}";
+                    failedMessages.Add($"{originalPaths[i]} → {newPaths[i]}（{record.ErrorMessage}）");
                     failCount++;
-                    operation.Items.Add(item);
+                    operation.Items.Add(record);
                 }
-                catch (System.IO.IOException ex)
+                catch (IOException ex)
                 {
-                    item.Success = false;
-                    item.ErrorMessage = $"IO錯誤: {ex.Message}";
-                    failedFiles.Add($"{originalFileNames[i]} -> {newFileNames[i]} (IO錯誤: {ex.Message})");
+                    record.Success = false;
+                    record.ErrorMessage = $"IO 錯誤：{ex.Message}";
+                    failedMessages.Add($"{originalPaths[i]} → {newPaths[i]}（{record.ErrorMessage}）");
                     failCount++;
-                    operation.Items.Add(item);
+                    operation.Items.Add(record);
                 }
                 catch (Exception ex)
                 {
-                    item.Success = false;
-                    item.ErrorMessage = $"錯誤: {ex.Message}";
-                    failedFiles.Add($"{originalFileNames[i]} -> {newFileNames[i]} (錯誤: {ex.Message})");
+                    record.Success = false;
+                    record.ErrorMessage = $"錯誤：{ex.Message}";
+                    failedMessages.Add($"{originalPaths[i]} → {newPaths[i]}（{record.ErrorMessage}）");
                     failCount++;
-                    operation.Items.Add(item);
+                    operation.Items.Add(record);
                 }
             }
 
-            // 如果有成功更名的檔案，將操作記錄推入UNDO堆疊
+            // 有成功更名的操作才推入 Undo 堆疊
             if (operation.SuccessCount > 0)
             {
                 _undoManager.PushOperation(operation);
                 UpdateUndoButtonState();
+
+                // 告知 RuleManager 更名後的新路徑，作為下次計算的基準
+                _ruleManager?.SetOriginalFileNames(newPaths);
             }
 
-            // 顯示結果訊息
-            string message = $"成功更名 {successCount} 個檔案";
-            if (failCount > 0)
-            {
-                message += $"\n失敗 {failCount} 個檔案";
-                if (failedFiles.Count <= 10)
-                {
-                    message += "\n\n失敗的檔案：\n" + string.Join("\n", failedFiles);
-                }
-                else
-                {
-                    message += "\n\n前10個失敗的檔案：\n" + string.Join("\n", failedFiles.Take(10));
-                    message += $"\n... 還有 {failedFiles.Count - 10} 個檔案失敗";
-                }
-                MessageBox.Show(message, failCount > 0 ? "部分成功" : "成功", MessageBoxButtons.OK, failCount > 0 ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(message, "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-
-            //並將檔名資料傳送給_ruleManager
-            if (_ruleManager != null && successCount > 0)
-            {
-                _ruleManager.SetOriginalFileNames(newFileNames);
-            }
+            ShowRenameResult(successCount, failCount, failedMessages);
         }
 
-        private void comboBoxAddRule_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (comboBoxAddRule.SelectedItem == null || _ruleManager == null)
-            {
-                return;
-            }
-
-            string? selectedRule = comboBoxAddRule.SelectedItem.ToString();
-            // 跳過預設選項
-            if (selectedRule == null || selectedRule == "請選擇新增命名規則")
-            {
-                return;
-            }
-
-            // 調用統一的添加規則方法
-            AddRenameRule(selectedRule);
-
-            //讓comboBoxAddRule的選項變成第一個
-            comboBoxAddRule.SelectedIndex = 0;
-        }
-
-        /// <summary>
-        /// 添加更名規則的統一方法
-        /// </summary>
-        /// <param name="ruleName">規則名稱</param>
-        private void AddRenameRule(string ruleName)
-        {
-            if (_ruleManager == null)
-            {
-                return;
-            }
-
-            switch (ruleName)
-            {
-                case "重新編號":
-                    var numberingRuleControl = new NumberingRuleControl();
-                    numberingRuleControl.RuleID = RuleID;
-                    Debug.WriteLine("Add NumberingRuleControl RuleID = " + RuleID);
-
-                    numberingRuleControl.Dock = DockStyle.Top; // 設置停靠方式
-                    ruleContainer.Controls.Add(numberingRuleControl); // 將控制項添加到Form_FlowerRename容器中
-                    numberingRuleControl._Form_FlowerRename = this;
-                    //將新增的numberingRuleControl在ruleContainer的位置移到最上方
-                    ruleContainer.Controls.SetChildIndex(numberingRuleControl, 0);
-                    numberingRuleControl.Focus();                    // 創建 RuleManager 中的 NumberingRule
-                    var numberingRule = new NumberingRule(numberingRuleControl);
-                    _ruleManager.AddRuleControlPair(numberingRule, numberingRuleControl, RuleID); // 添加或更新規則
-
-                    // 自動設定 baseFileNameTextBox 為前兩個檔名的相同部分（在訂閱事件之後設定，才能觸發更新）
-                    string commonPrefix = GetCommonPrefixFromFileList();
-                    if (!string.IsNullOrEmpty(commonPrefix))
-                    {
-                        numberingRuleControl.baseFileNameTextBox.Text = commonPrefix;
-                        // 手動觸發更新檔案列表（因為 TextChanged 事件已經會觸發，但為了確保更新，這裡也調用一次）
-                        if (_ruleManager != null)
-                        {
-                            _ruleManager.RefreshForm_FlowerRename_FileList();
-                        }
-                    }
-
-                    RuleID++;
-                    break;
-                case "置換指定文字(亦可刪除)":
-                    var ReplaceRuleControl = new ReplaceRuleControl();
-                    ReplaceRuleControl.RuleID = RuleID;
-                    Debug.WriteLine("Add ReplaceRuleControl RuleID = " + RuleID);
-                    ReplaceRuleControl.Dock = DockStyle.Top; // 設置停靠方式
-                    ruleContainer.Controls.Add(ReplaceRuleControl); // 將控制項添加到Form_FlowerRename容器中
-                    ReplaceRuleControl._Form_FlowerRename = this;
-                    //將新增的numberingRuleControl在ruleContainer的位置移到最上方
-                    ruleContainer.Controls.SetChildIndex(ReplaceRuleControl, 0);
-                    ReplaceRuleControl.Focus();                    // 創建 RuleManager 中的 NumberingRule
-                    var ReplaceRule = new ReplaceRule(ReplaceRuleControl);
-                    _ruleManager.AddRuleControlPair(ReplaceRule, ReplaceRuleControl, RuleID); // 添加或更新規則
-                    RuleID++;
-                    break;
-                case "添加文字(根據位置)":
-                    var InsertRuleControl = new InsertRuleControl();
-                    InsertRuleControl.RuleID = RuleID;
-                    Debug.WriteLine("Add InsertRuleControl RuleID = " + RuleID);
-                    InsertRuleControl.Dock = DockStyle.Top; // 設置停靠方式
-                    ruleContainer.Controls.Add(InsertRuleControl); // 將控制項添加到Form_FlowerRename容器中
-                    InsertRuleControl._Form_FlowerRename = this;
-                    //將新增的numberingRuleControl在ruleContainer的位置移到最上方
-                    ruleContainer.Controls.SetChildIndex(InsertRuleControl, 0);
-                    InsertRuleControl.Focus();                    // 創建 RuleManager 中的 NumberingRule
-                    var InsertRule = new InsertRule(InsertRuleControl);
-                    _ruleManager.AddRuleControlPair(InsertRule, InsertRuleControl, RuleID); // 添加或更新規則
-                    RuleID++;
-                    break;
-                case "刪除文字(根據位置)":
-                    var DeleteRuleControl = new DeleteRuleControl();
-                    DeleteRuleControl.RuleID = RuleID;
-                    Debug.WriteLine("Add DeleteRuleControl RuleID = " + RuleID);
-                    DeleteRuleControl.Dock = DockStyle.Top; // 設置停靠方式
-                    ruleContainer.Controls.Add(DeleteRuleControl); // 將控制項添加到Form_FlowerRename容器中
-                    DeleteRuleControl._Form_FlowerRename = this;
-                    //將新增的numberingRuleControl在ruleContainer的位置移到最上方
-                    ruleContainer.Controls.SetChildIndex(DeleteRuleControl, 0);
-                    DeleteRuleControl.Focus();                    // 創建 RuleManager 中的 NumberingRule
-                    var DeleteRule = new DeleteRule(DeleteRuleControl);
-                    _ruleManager.AddRuleControlPair(DeleteRule, DeleteRuleControl, RuleID); // 添加或更新規則
-                    RuleID++;
-                    break;
-                case "群組化(AI產圖方便比對)":
-                    var GroupRuleControl = new GroupRuleControl();
-                    GroupRuleControl.RuleID = RuleID;
-                    Debug.WriteLine("Add GroupRuleControl RuleID = " + RuleID);
-                    GroupRuleControl.Dock = DockStyle.Top; // 設置停靠方式
-                    ruleContainer.Controls.Add(GroupRuleControl); // 將控制項添加到Form_FlowerRename容器中
-                    GroupRuleControl._Form_FlowerRename = this;
-                    //將新增的numberingRuleControl在ruleContainer的位置移到最上方
-                    ruleContainer.Controls.SetChildIndex(GroupRuleControl, 0);
-                    GroupRuleControl.Focus();                    // 創建 RuleManager 中的 NumberingRule
-                    var GroupRule = new GroupRule(GroupRuleControl);
-                    _ruleManager.AddRuleControlPair(GroupRule, GroupRuleControl, RuleID); // 添加或更新規則
-
-                    // 自動設定 baseFileNameTextBox 為前兩個檔名的相同部分（在訂閱事件之後設定，才能觸發更新）
-                    commonPrefix = GetCommonPrefixFromFileList();
-                    if (!string.IsNullOrEmpty(commonPrefix))
-                    {
-                        GroupRuleControl.GroupFileNameTextBox.Text = commonPrefix;
-                        // 手動觸發更新檔案列表（因為 TextChanged 事件已經會觸發，但為了確保更新，這裡也調用一次）
-                        if (_ruleManager != null)
-                        {
-                            _ruleManager.RefreshForm_FlowerRename_FileList();
-                        }
-                    }
-
-                    RuleID++;
-                    break;
-            }
-        }
-
-        // MenuStrip 事件處理方法
-        private void menuItemNumberingRule_Click(object sender, EventArgs e)
-        {
-            AddRenameRule("重新編號");
-        }
-
-        private void menuItemReplaceRule_Click(object sender, EventArgs e)
-        {
-            AddRenameRule("置換指定文字(亦可刪除)");
-        }
-
-        private void menuItemInsertRule_Click(object sender, EventArgs e)
-        {
-            AddRenameRule("添加文字(根據位置)");
-        }
-
-        private void menuItemGroupRule_Click(object sender, EventArgs e)
-        {
-            AddRenameRule("群組化(AI產圖方便比對)");
-        }
-
-        public void RemoveRuleControlPair(int RuleID)
-        {
-            if (_ruleManager != null)
-            {
-                _ruleManager.RemoveRuleControlPair(RuleID);
-            }
-        }
-        // 處理檔案列表欄位點擊排序
-        private void fileListView_ColumnClick(object sender, ColumnClickEventArgs e)
-        {
-            this.fileListView.ListViewItemSorter = m_LvwColumnSorter;
-            Debug.WriteLine("fileListView_ColumnClick");
-            // 檢查點擊的欄位是否為目前的排序欄位
-            Debug.WriteLine(e.Column.ToString());
-            if (e.Column == 1) //新檔名欄位不進行排序
-            {
-                toolStripStatusLabel_News.Text = "提示！無法依［" + fileListView.Columns[e.Column].Text + "］排序";
-                return;
-            }
-
-            if (e.Column == m_LvwColumnSorter.SortColumn)
-            {
-                Debug.WriteLine("點到同一個欄位");
-                // 切換排序方向（升序/降序）
-                if (m_LvwColumnSorter.Order == SortOrder.Ascending)
-                {
-                    m_LvwColumnSorter.Order = SortOrder.Descending;
-                    toolStripStatusLabel_News.Text = "依［" + fileListView.Columns[e.Column].Text + "］排序，方式：降序";
-                }
-                else
-                {
-                    m_LvwColumnSorter.Order = SortOrder.Ascending;
-                    toolStripStatusLabel_News.Text = "依［" + fileListView.Columns[e.Column].Text + "］排序，方式：升序";
-                }
-            }
-            else
-            {
-                Debug.WriteLine("點到不同欄位");
-                // 設定新的排序欄位，預設為升序
-                m_LvwColumnSorter.SortColumn = e.Column;
-                m_LvwColumnSorter.Order = SortOrder.Ascending;
-                toolStripStatusLabel_News.Text = "依［" + fileListView.Columns[e.Column].Text + "］排序，方式：升序";
-            }
-            Debug.WriteLine("fileListView_ColumnClick2");
-
-            fileListView.BeginUpdate();
-            // 執行排序
-            this.fileListView.Sort();
-            Debug.WriteLine("SORT");
-            if (_ruleManager != null)
-            {
-                _ruleManager.RefreshForm_FlowerRename_FileList(); //通知RuleManager更新計算並更新主介面的新舊檔名。
-            }
-            fileListView.EndUpdate();
-        }
+        // ───────────────────────────────────────────────
+        //  Undo 復原
+        // ───────────────────────────────────────────────
 
         private void buttonUndo_Click(object sender, EventArgs e)
         {
-            // 檢查是否有添加更名功能（UNDO後需要重新計算新檔名）
+            // Undo 後需要根據規則重新計算新檔名預覽，因此必須有規則存在
             if (_ruleManager == null || _ruleManager.GetRuleControlPair().Count == 0)
             {
-                MessageBox.Show("請先在上方添加更名功能（例如：重新編號、置換指定文字等）\n\nUNDO功能需要更名規則來重新計算新檔名。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("請先新增命名規則（Undo 後需要規則來重新計算新檔名預覽）",
+                    "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-
             UndoRenameFiles();
         }
 
+        /// <summary>
+        /// 執行 Undo：將上一次成功更名的檔案改回原始檔名，並重新整理 ListView 與新檔名預覽。
+        /// </summary>
         private void UndoRenameFiles()
         {
-            // 檢查是否可以執行UNDO
             if (!_undoManager.CanUndo)
             {
                 MessageBox.Show("沒有可復原的操作", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            // 取得最後一次更名操作
-            RenameOperation? operation = _undoManager.PopOperation();
+            var operation = _undoManager.PopOperation();
             if (operation == null || operation.Items.Count == 0)
             {
                 MessageBox.Show("沒有可復原的操作", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -857,196 +543,351 @@ namespace FlowerRename
                 return;
             }
 
-            int successCount = 0;
-            int failCount = 0;
-            List<string> failedFiles = new List<string>();
-
-            // 只處理成功更名的檔案（失敗的檔案不需要復原）
+            // 只對上次成功更名的檔案執行反向更名
             var successItems = operation.Items.Where(item => item.Success).ToList();
-
             if (successItems.Count == 0)
             {
-                MessageBox.Show("該次操作沒有成功更名的檔案，無需復原", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("該次操作沒有成功更名的檔案，無需復原",
+                    "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 UpdateUndoButtonState();
                 return;
             }
 
-            // 執行反向更名（將新檔名改回原始檔名）
+            int successCount = 0, failCount = 0;
+            var failedMessages = new List<string>();
+
             foreach (var item in successItems)
             {
                 try
                 {
-                    // 檢查新檔案是否存在（應該存在，因為之前更名成功了）
-                    if (!System.IO.File.Exists(item.NewPath))
+                    // 新路徑的檔案必須存在（代表更名確實成功過）
+                    if (!File.Exists(item.NewPath))
                     {
-                        failedFiles.Add($"{item.NewPath} -> {item.OriginalPath} (檔案不存在，可能已被刪除)");
+                        failedMessages.Add($"{item.NewPath} → {item.OriginalPath}（新路徑檔案不存在，可能已被刪除）");
                         failCount++;
                         continue;
                     }
 
-                    // 檢查原始檔案是否已存在（如果存在，表示可能被其他操作修改過）
-                    if (System.IO.File.Exists(item.OriginalPath))
+                    // 原始路徑不能已被佔用（否則無法復原）
+                    if (File.Exists(item.OriginalPath))
                     {
-                        failedFiles.Add($"{item.NewPath} -> {item.OriginalPath} (原始檔名已存在)");
+                        failedMessages.Add($"{item.NewPath} → {item.OriginalPath}（原始檔名已存在，無法復原）");
                         failCount++;
                         continue;
                     }
 
-                    // 執行反向更名
-                    System.IO.File.Move(item.NewPath, item.OriginalPath);
+                    File.Move(item.NewPath, item.OriginalPath);
 
-                    // 更新ListView顯示（只更新原始檔名，新檔名會由後續的RefreshForm_FlowerRename_FileList重新計算）
+                    // 更新 ListView 中的原始檔名欄位
                     if (item.ListViewIndex >= 0 && item.ListViewIndex < fileListView.Items.Count)
-                    {
-                        fileListView.Items[item.ListViewIndex].SubItems[0].Text = Path.GetFileName(item.OriginalPath);
-                    }
+                        fileListView.Items[item.ListViewIndex].SubItems[0].Text =
+                            Path.GetFileName(item.OriginalPath);
 
                     successCount++;
                 }
                 catch (UnauthorizedAccessException ex)
                 {
-                    failedFiles.Add($"{item.NewPath} -> {item.OriginalPath} (權限不足: {ex.Message})");
+                    failedMessages.Add($"{item.NewPath} → {item.OriginalPath}（權限不足：{ex.Message}）");
                     failCount++;
                 }
-                catch (System.IO.IOException ex)
+                catch (IOException ex)
                 {
-                    failedFiles.Add($"{item.NewPath} -> {item.OriginalPath} (IO錯誤: {ex.Message})");
+                    failedMessages.Add($"{item.NewPath} → {item.OriginalPath}（IO 錯誤：{ex.Message}）");
                     failCount++;
                 }
                 catch (Exception ex)
                 {
-                    failedFiles.Add($"{item.NewPath} -> {item.OriginalPath} (錯誤: {ex.Message})");
+                    failedMessages.Add($"{item.NewPath} → {item.OriginalPath}（錯誤：{ex.Message}）");
                     failCount++;
                 }
             }
 
-            // 更新RuleManager的原始檔名列表，並重新計算新檔名
+            // 復原成功後重新同步 RuleManager 的原始檔名，並觸發預覽更新
             if (_ruleManager != null && successCount > 0)
             {
-                string[] restoredFileNames = fileListView.Items.Cast<ListViewItem>()
-                    .Select(item => Path.Combine(item.SubItems[4].Text, item.SubItems[0].Text))
+                var restoredPaths = fileListView.Items.Cast<ListViewItem>()
+                    .Select(i => Path.Combine(i.SubItems[4].Text, i.SubItems[0].Text))
                     .ToArray();
-                _ruleManager.SetOriginalFileNames(restoredFileNames);
-
-                // 強制重新計算並更新新檔名（根據當前的更名規則）
-                _ruleManager.RefreshForm_FlowerRename_FileList();
+                _ruleManager.SetOriginalFileNames(restoredPaths);
+                _ruleManager.RefreshFileList();
             }
 
-            // 更新UNDO按鈕狀態
             UpdateUndoButtonState();
-
-            // 顯示復原結果訊息
-            string message = $"成功復原 {successCount} 個檔案";
-            if (failCount > 0)
-            {
-                message += $"\n失敗 {failCount} 個檔案";
-                if (failedFiles.Count <= 10)
-                {
-                    message += "\n\n失敗的檔案：\n" + string.Join("\n", failedFiles);
-                }
-                else
-                {
-                    message += "\n\n前10個失敗的檔案：\n" + string.Join("\n", failedFiles.Take(10));
-                    message += $"\n... 還有 {failedFiles.Count - 10} 個檔案失敗";
-                }
-                MessageBox.Show(message, failCount > 0 ? "部分成功" : "復原成功", MessageBoxButtons.OK, failCount > 0 ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(message, "復原成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
+            ShowRenameResult(successCount, failCount, failedMessages, isUndo: true);
         }
 
         /// <summary>
-        /// 更新UNDO按鈕的啟用狀態
+        /// 依據 Undo 堆疊狀態更新 Undo 按鈕的啟用狀態與文字。
         /// </summary>
         private void UpdateUndoButtonState()
         {
-            // UNDO按鈕只有在有UNDO歷史記錄時才啟用（可點擊）
             buttonUndo.Enabled = _undoManager.CanUndo;
-            if (_undoManager.CanUndo)
+            buttonUndo.Text = _undoManager.CanUndo
+                ? $"復原 Undo ({_undoManager.UndoCount})"
+                : "復原 Undo";
+        }
+
+        /// <summary>
+        /// 顯示更名或復原的結果對話框。
+        /// </summary>
+        private void ShowRenameResult(int successCount, int failCount, List<string> failedMessages,
+            bool isUndo = false)
+        {
+            string action = isUndo ? "復原" : "更名";
+            string message = $"成功{action} {successCount} 個檔案";
+
+            if (failCount > 0)
             {
-                buttonUndo.Text = $"復原 Undo ({_undoManager.UndoCount})";
+                message += $"\n失敗 {failCount} 個檔案";
+                var sample = failedMessages.Take(10).ToList();
+                message += "\n\n" + (failedMessages.Count <= 10 ? "失敗的檔案：" : "前 10 個失敗的檔案：");
+                message += "\n" + string.Join("\n", sample);
+                if (failedMessages.Count > 10)
+                    message += $"\n… 還有 {failedMessages.Count - 10} 個失敗";
+
+                MessageBox.Show(message, $"部分{action}成功",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             else
             {
-                buttonUndo.Text = "復原 Undo";
+                MessageBox.Show(message, $"{action}成功",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            UpdateStatusLabel(message.Split('\n')[0]);
+        }
+
+        // ───────────────────────────────────────────────
+        //  規則管理
+        // ───────────────────────────────────────────────
+
+        /// <summary>
+        /// ComboBox 選項變更時，依選取的規則名稱新增對應的規則控制項。
+        /// </summary>
+        private void comboBoxAddRule_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_ruleManager == null) return;
+
+            string? selected = comboBoxAddRule.SelectedItem?.ToString();
+            if (string.IsNullOrEmpty(selected) || selected == "請選擇新增命名規則") return;
+
+            AddRenameRule(selected);
+            comboBoxAddRule.SelectedIndex = 0; // 選完後重設回提示文字
+        }
+
+        // MenuStrip 對應的點擊事件（委派給統一的 AddRenameRule 方法）
+        private void menuItemNumberingRule_Click(object sender, EventArgs e) => AddRenameRule("重新編號");
+        private void menuItemReplaceRule_Click(object sender, EventArgs e) => AddRenameRule("置換指定文字(亦可刪除)");
+        private void menuItemInsertRule_Click(object sender, EventArgs e) => AddRenameRule("添加文字(根據位置)");
+        private void menuItemDeleteRule_Click(object sender, EventArgs e) => AddRenameRule("刪除文字(根據位置)");
+        private void menuItemGroupRule_Click(object sender, EventArgs e) => AddRenameRule("群組化(AI產圖方便比對)");
+
+        /// <summary>
+        /// 依規則名稱建立對應的 UserControl 與 IRenameRule，
+        /// 並將其加入規則容器（ruleContainer）及 RuleManager。
+        /// ─────────────────────────────────────────────
+        /// 【新增命名規則時，在此方法的 switch 加入新的 case】
+        /// ─────────────────────────────────────────────
+        /// </summary>
+        private void AddRenameRule(string ruleName)
+        {
+            if (_ruleManager == null) return;
+
+            switch (ruleName)
+            {
+                case "重新編號":
+                {
+                    var ctrl = CreateRuleControl<NumberingRuleControl>();
+                    var rule = new NumberingRule(ctrl);
+                    _ruleManager.AddRuleControlPair(rule, ctrl, _nextRuleID++);
+
+                    // 自動以清單前兩個檔名的共同前綴填入前綴文字欄位
+                    string prefix = GetCommonPrefixFromFileList();
+                    if (!string.IsNullOrEmpty(prefix))
+                    {
+                        ctrl.baseFileNameTextBox.Text = prefix;
+                        _ruleManager.RefreshFileList();
+                    }
+                    break;
+                }
+                case "置換指定文字(亦可刪除)":
+                {
+                    var ctrl = CreateRuleControl<ReplaceRuleControl>();
+                    var rule = new ReplaceRule(ctrl);
+                    _ruleManager.AddRuleControlPair(rule, ctrl, _nextRuleID++);
+                    break;
+                }
+                case "添加文字(根據位置)":
+                {
+                    var ctrl = CreateRuleControl<InsertRuleControl>();
+                    var rule = new InsertRule(ctrl);
+                    _ruleManager.AddRuleControlPair(rule, ctrl, _nextRuleID++);
+                    break;
+                }
+                case "刪除文字(根據位置)":
+                {
+                    var ctrl = CreateRuleControl<DeleteRuleControl>();
+                    var rule = new DeleteRule(ctrl);
+                    _ruleManager.AddRuleControlPair(rule, ctrl, _nextRuleID++);
+                    break;
+                }
+                case "群組化(AI產圖方便比對)":
+                {
+                    var ctrl = CreateRuleControl<GroupRuleControl>();
+                    var rule = new GroupRule(ctrl);
+                    _ruleManager.AddRuleControlPair(rule, ctrl, _nextRuleID++);
+
+                    string prefix = GetCommonPrefixFromFileList();
+                    if (!string.IsNullOrEmpty(prefix))
+                    {
+                        ctrl.GroupFileNameTextBox.Text = prefix;
+                        _ruleManager.RefreshFileList();
+                    }
+                    break;
+                }
             }
         }
 
         /// <summary>
-        /// 從檔案列表中取得前兩個檔名的相同前綴部分（不含副檔名）
+        /// 建立規則控制項的共用輔助方法：設定 RuleID、Dock、父容器，並移至最上方。
         /// </summary>
-        /// <returns>相同的前綴字串，如果沒有相同部分則返回第一個檔名（不含副檔名）</returns>
-        private string GetCommonPrefixFromFileList()
+        private T CreateRuleControl<T>() where T : UserControl, new()
         {
-            if (fileListView.Items.Count == 0)
+            var ctrl = new T();
+
+            // 透過反射設定公開的 RuleID 與 _Form_FlowerRename 欄位
+            var type = typeof(T);
+            type.GetField("RuleID")?.SetValue(ctrl, _nextRuleID);
+            type.GetField("_Form_FlowerRename")?.SetValue(ctrl, this);
+
+            ctrl.Dock = DockStyle.Top;
+            ruleContainer.Controls.Add(ctrl);
+            ruleContainer.Controls.SetChildIndex(ctrl, 0); // 新規則顯示在最上方
+            ctrl.Focus();
+            return ctrl;
+        }
+
+        /// <summary>
+        /// 由規則控制項（關閉按鈕）呼叫，要求 RuleManager 移除對應的規則。
+        /// </summary>
+        public void RemoveRuleControlPair(int ruleID)
+        {
+            _ruleManager?.RemoveRuleControlPair(ruleID);
+        }
+
+        // ───────────────────────────────────────────────
+        //  ListView 排序（點擊欄位標題）
+        // ───────────────────────────────────────────────
+
+        private void fileListView_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            // 「新檔名」欄不支援排序（值會因規則而動態改變）
+            if (e.Column == 1)
             {
-                return string.Empty;
+                toolStripStatusLabel_News.Text = $"提示！無法依〔{fileListView.Columns[e.Column].Text}〕排序";
+                return;
             }
 
-            // 取得前兩個檔名（不含副檔名）
-            string firstFileName = Path.GetFileNameWithoutExtension(fileListView.Items[0].SubItems[0].Text);
+            fileListView.ListViewItemSorter = _lvwColumnSorter;
 
-            if (fileListView.Items.Count == 1)
+            if (e.Column == _lvwColumnSorter.SortColumn)
             {
-                // 只有一個檔案，返回該檔名
-                return firstFileName;
-            }
-
-            string secondFileName = Path.GetFileNameWithoutExtension(fileListView.Items[1].SubItems[0].Text);
-
-            // 計算相同的前綴部分（不區分大小寫）
-            int commonLength = 0;
-            int minLength = Math.Min(firstFileName.Length, secondFileName.Length);
-
-            for (int i = 0; i < minLength; i++)
-            {
-                // 使用不區分大小寫的比較
-                if (char.ToLowerInvariant(firstFileName[i]) == char.ToLowerInvariant(secondFileName[i]))
-                {
-                    commonLength++;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            // 如果有相同部分，返回相同部分；否則返回第一個檔名
-            if (commonLength > 0)
-            {
-                return firstFileName.Substring(0, commonLength);
+                // 點擊相同欄位：切換升序 / 降序
+                _lvwColumnSorter.Order = _lvwColumnSorter.Order == SortOrder.Ascending
+                    ? SortOrder.Descending
+                    : SortOrder.Ascending;
             }
             else
             {
-                return firstFileName;
+                // 點擊不同欄位：切換到新欄位，預設升序
+                _lvwColumnSorter.SortColumn = e.Column;
+                _lvwColumnSorter.Order = SortOrder.Ascending;
+            }
+
+            string orderText = _lvwColumnSorter.Order == SortOrder.Ascending ? "升序" : "降序";
+            toolStripStatusLabel_News.Text =
+                $"依〔{fileListView.Columns[e.Column].Text}〕排序，方式：{orderText}";
+
+            fileListView.BeginUpdate();
+            fileListView.Sort();
+
+            // 排序後重新計算新檔名預覽（排序改變了檔案順序，規則結果也會隨之變化）
+            _ruleManager?.RefreshFileList();
+            fileListView.EndUpdate();
+        }
+
+        // ───────────────────────────────────────────────
+        //  ListView 項目互動
+        // ───────────────────────────────────────────────
+
+        private void fileListView_DoubleClick(object sender, EventArgs e)
+        {
+            // 雙擊清單項目 → 用系統預設程式開啟該檔案
+            if (fileListView.SelectedItems.Count == 0) return;
+
+            var item = fileListView.SelectedItems[0];
+            string filePath = Path.Combine(item.SubItems[4].Text, item.SubItems[0].Text);
+            try
+            {
+                Process.Start(new ProcessStartInfo(filePath) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"無法開啟檔案：{ex.Message}", "錯誤",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void toolStripMenuItem_CopyFileNameToClipboard_Click(object sender, EventArgs e)
         {
-            if (fileListView.SelectedItems.Count > 0)
+            // 右鍵選單：複製選取項目的原始檔名到剪貼簿
+            if (fileListView.SelectedItems.Count == 0) return;
+
+            try
             {
-                try
+                var fileNames = fileListView.SelectedItems.Cast<ListViewItem>().Select(i => i.Text);
+                string text = string.Join(Environment.NewLine, fileNames);
+                if (!string.IsNullOrEmpty(text))
                 {
-                    // 取得選取項目的檔案名稱 (SubItems[0] 為原始檔名)
-                    var fileNames = fileListView.SelectedItems.Cast<ListViewItem>()
-                                              .Select(item => item.Text);
-                    string textToCopy = string.Join(Environment.NewLine, fileNames);
-                    
-                    if (!string.IsNullOrEmpty(textToCopy))
-                    {
-                        Clipboard.SetText(textToCopy);
-                        string trimText = textToCopy.Replace("\r\n", "、");
-                        toolStripStatusLabel_News.Text = "複製檔名至剪貼簿 " + trimText;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"複製到剪貼簿時發生錯誤: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Clipboard.SetText(text);
+                    string preview = text.Replace(Environment.NewLine, "、");
+                    toolStripStatusLabel_News.Text = $"複製檔名至剪貼簿：{preview}";
                 }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"複製到剪貼簿時發生錯誤：{ex.Message}", "錯誤",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ───────────────────────────────────────────────
+        //  輔助工具方法
+        // ───────────────────────────────────────────────
+
+        /// <summary>
+        /// 從清單前兩個檔案的名稱（不含副檔名）計算共同前綴字串，
+        /// 用於新增規則時自動填入前綴文字欄位，提升使用便利性。
+        /// </summary>
+        private string GetCommonPrefixFromFileList()
+        {
+            if (fileListView.Items.Count == 0) return string.Empty;
+
+            string first = Path.GetFileNameWithoutExtension(fileListView.Items[0].SubItems[0].Text);
+            if (fileListView.Items.Count == 1) return first;
+
+            string second = Path.GetFileNameWithoutExtension(fileListView.Items[1].SubItems[0].Text);
+
+            int commonLength = 0;
+            int minLen = Math.Min(first.Length, second.Length);
+            for (int i = 0; i < minLen; i++)
+            {
+                if (char.ToLowerInvariant(first[i]) != char.ToLowerInvariant(second[i]))
+                    break;
+                commonLength++;
+            }
+
+            return commonLength > 0 ? first.Substring(0, commonLength) : first;
         }
     }
 }

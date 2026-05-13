@@ -1,15 +1,14 @@
 namespace FlowerRename
 {
+    /// <summary>
+    /// 應用程式進入點。初始化 Windows Forms 執行環境後啟動主視窗。
+    /// </summary>
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
+            // 套用高 DPI 與預設字型等應用程式組態
             ApplicationConfiguration.Initialize();
             Application.Run(new Form_FlowerRename());
         }

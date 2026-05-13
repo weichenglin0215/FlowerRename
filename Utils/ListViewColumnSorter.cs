@@ -1,116 +1,71 @@
-﻿using System;
 using System.Collections;
-using System.Windows.Forms;
 
-/// <summary>
-/// 提供ListView欄位排序功能，支援數字與字串排序。
-/// </summary>
-public class ListViewColumnSorter : IComparer
+namespace FlowerRename
 {
     /// <summary>
-    /// 要排序的欄位索引。
+    /// 提供 ListView 欄位排序功能的比較器（IComparer 實作）。
+    /// 自動偵測欄位內容是否為數值：
+    ///   - 兩者皆為數值 → 以數值大小排序
+    ///   - 其中一個為數值 → 數值排在前面
+    ///   - 兩者皆為字串 → 以忽略大小寫的字串順序排序
+    /// 支援升序（Ascending）與降序（Descending）切換。
     /// </summary>
-    private int ColumnToSort;
-
-    /// <summary>
-    /// 排序方式 (升序或降序)。
-    /// </summary>
-    private SortOrder OrderOfSort;
-
-    /// <summary>
-    /// 字串比較工具，忽略大小寫。
-    /// </summary>
-    private CaseInsensitiveComparer ObjectCompare;
-
-    /// <summary>
-    /// 建構子，預設排序第一欄，無排序方式。
-    /// </summary>
-    public ListViewColumnSorter()
+    public class ListViewColumnSorter : IComparer
     {
-        ColumnToSort = 0;
-        OrderOfSort = SortOrder.None;
-        ObjectCompare = new CaseInsensitiveComparer();
-    }
+        // 目前排序依據的欄位索引（對應 ListView.Columns 的索引）
+        private int _sortColumn = 0;
 
-    /// <summary>
-    /// 實作IComparer介面的比較方法。
-    /// </summary>
-    /// <param name="x">第一個比較的ListViewItem</param>
-    /// <param name="y">第二個比較的ListViewItem</param>
-    /// <returns>比較結果(小於0表示x在y前，大於0表示y在x前，0表示相等)</returns>
-    public int Compare(object x, object y)
-    {
-        int compareResult;
-        ListViewItem listviewX, listviewY;
+        // 目前的排序方向
+        private SortOrder _sortOrder = SortOrder.None;
 
-        // 將物件轉型為ListViewItem
-        listviewX = (ListViewItem)x;
-        listviewY = (ListViewItem)y;
+        // 用於字串比較的工具（忽略大小寫）
+        private readonly CaseInsensitiveComparer _comparer = new CaseInsensitiveComparer();
 
-        // 取得要比較的文字
-        string sx = listviewX.SubItems[ColumnToSort].Text;
-        string sy = listviewY.SubItems[ColumnToSort].Text;
-
-        double dx, dy;
-
-        // 判斷是否為數值型態
-        bool isNumericX = double.TryParse(sx, out dx);
-        bool isNumericY = double.TryParse(sy, out dy);
-
-        if (isNumericX && isNumericY)
+        /// <summary>設定或取得排序依據的欄位索引</summary>
+        public int SortColumn
         {
-            // 若兩者皆為數值，則以數值大小進行比較
-            compareResult = dx.CompareTo(dy);
-        }
-        else if (isNumericX)
-        {
-            // 只有x為數字時，將數字排在前面
-            compareResult = -1;
-        }
-        else if (isNumericY)
-        {
-            // 只有y為數字時，將數字排在前面
-            compareResult = 1;
-        }
-        else
-        {
-            // 若兩者皆非數值，則以字串方式比較 (忽略大小寫)
-            compareResult = ObjectCompare.Compare(sx, sy);
+            get => _sortColumn;
+            set => _sortColumn = value;
         }
 
-        // 根據指定的排序方式決定結果
-        if (OrderOfSort == SortOrder.Ascending)
+        /// <summary>設定或取得排序方向（Ascending / Descending / None）</summary>
+        public SortOrder Order
         {
-            // 升序排序
-            return compareResult;
+            get => _sortOrder;
+            set => _sortOrder = value;
         }
-        else if (OrderOfSort == SortOrder.Descending)
-        {
-            // 降序排序
-            return -compareResult;
-        }
-        else
-        {
-            // 無排序
-            return 0;
-        }
-    }
 
-    /// <summary>
-    /// 設定或取得排序欄位索引。
-    /// </summary>
-    public int SortColumn
-    {
-        set { ColumnToSort = value; }
-        get { return ColumnToSort; }
-    }
+        /// <summary>
+        /// IComparer 介面實作：比較兩個 ListViewItem 指定欄位的值。
+        /// </summary>
+        public int Compare(object? x, object? y)
+        {
+            if (x is not ListViewItem itemX || y is not ListViewItem itemY)
+                return 0;
 
-    /// <summary>
-    /// 設定或取得排序方式。
-    /// </summary>
-    public SortOrder Order
-    {
-        set { OrderOfSort = value; }
-        get { return OrderOfSort; }
+            string sx = itemX.SubItems[_sortColumn].Text;
+            string sy = itemY.SubItems[_sortColumn].Text;
+
+            // 嘗試將欄位值解析為數值，以決定排序策略
+            bool isNumX = double.TryParse(sx, out double dx);
+            bool isNumY = double.TryParse(sy, out double dy);
+
+            int result;
+            if (isNumX && isNumY)
+                result = dx.CompareTo(dy);      // 兩者都是數字：數值比較
+            else if (isNumX)
+                result = -1;                    // 只有 x 是數字：數字排前面
+            else if (isNumY)
+                result = 1;                     // 只有 y 是數字：數字排前面
+            else
+                result = _comparer.Compare(sx, sy); // 兩者都是字串：字串比較
+
+            return _sortOrder switch
+            {
+                SortOrder.Ascending  =>  result,
+                SortOrder.Descending => -result,
+                _                    =>  0
+            };
+        }
     }
 }

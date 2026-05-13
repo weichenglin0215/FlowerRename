@@ -1,127 +1,132 @@
-using System;
-using System.Windows.Forms;
 using System.Diagnostics;
 
 namespace FlowerRename
 {
+    /// <summary>
+    /// 【群組化規則】的 UI 控制項。
+    /// 可設定：前綴文字、起始號、遞增量、補零位數、群組數量。
+    /// 任何參數變更時觸發 GroupFileNameChanged 事件。
+    /// </summary>
     public partial class GroupRuleControl : UserControl
     {
-        public Form_FlowerRename _Form_FlowerRename;
-        public int RuleID; //規則的ID只是用來區分規則，避免重複名稱的規則被誤刪除
-        public event Action<string, int, int, int, int> GroupFileNameChanged;
+        // 主視窗參照，用於關閉時通知移除規則
+        public Form_FlowerRename? _Form_FlowerRename;
+
+        // 規則唯一 ID
+        public int RuleID;
+
+        /// <summary>任何參數變更時觸發（前綴、起始號、遞增量、補零位數、群組數量）</summary>
+        public event Action<string, int, int, int, int>? GroupFileNameChanged;
 
         public GroupRuleControl()
         {
             InitializeComponent();
-            GroupFileNameTextBox.TextChanged += (s, e) =>
-            {
-                GroupFileNameChanged?.Invoke(GroupFileNameTextBox.Text, (int)startNumberNumericUpDown.Value, (int)incNumberNumericUpDown.Value, (int)paddingNumericUpDown.Value, (int)groupAmountUpDown.Value);
-            };
-            startNumberNumericUpDown.ValueChanged += (s, e) =>
-            {
-                GroupFileNameChanged?.Invoke(GroupFileNameTextBox.Text, (int)startNumberNumericUpDown.Value, (int)incNumberNumericUpDown.Value, (int)paddingNumericUpDown.Value, (int)groupAmountUpDown.Value);
-            };
-            incNumberNumericUpDown.ValueChanged += (s, e) =>
-            {
-                GroupFileNameChanged?.Invoke(GroupFileNameTextBox.Text, (int)startNumberNumericUpDown.Value, (int)incNumberNumericUpDown.Value, (int)paddingNumericUpDown.Value, (int)groupAmountUpDown.Value);
-            };
-            paddingNumericUpDown.ValueChanged += (s, e) =>
-            {
-                GroupFileNameChanged?.Invoke(GroupFileNameTextBox.Text, (int)startNumberNumericUpDown.Value, (int)incNumberNumericUpDown.Value, (int)paddingNumericUpDown.Value, (int)groupAmountUpDown.Value);
-            };
-            groupAmountUpDown.ValueChanged += (s, e) =>
-            {
-                GroupFileNameChanged?.Invoke(GroupFileNameTextBox.Text, (int)startNumberNumericUpDown.Value, (int)incNumberNumericUpDown.Value, (int)paddingNumericUpDown.Value, (int)groupAmountUpDown.Value);
-            };
+
+            GroupFileNameTextBox.TextChanged        += (s, e) => FireChanged();
+            startNumberNumericUpDown.ValueChanged   += (s, e) => FireChanged();
+            incNumberNumericUpDown.ValueChanged     += (s, e) => FireChanged();
+            paddingNumericUpDown.ValueChanged       += (s, e) => FireChanged();
+            groupAmountUpDown.ValueChanged          += (s, e) => FireChanged();
+        }
+
+        private void FireChanged()
+        {
+            GroupFileNameChanged?.Invoke(
+                GroupFileNameTextBox.Text,
+                (int)startNumberNumericUpDown.Value,
+                (int)incNumberNumericUpDown.Value,
+                (int)paddingNumericUpDown.Value,
+                (int)groupAmountUpDown.Value);
         }
 
         private void closeBtn_Click(object sender, EventArgs e)
         {
-            // 移除所有事件订阅者
-            GroupFileNameChanged = delegate { };
-            //通知Form_FlowerRename把_GroupRule從_ruleManager中刪除
-            _Form_FlowerRename.RemoveRuleControlPair(RuleID);
-            //刪除自己
+            GroupFileNameChanged = null;
+            _Form_FlowerRename?.RemoveRuleControlPair(RuleID);
             Parent?.Controls.Remove(this);
         }
     }
 
 
+    /// <summary>
+    /// 【群組化規則】的邏輯實作。
+    /// 將所有檔案平均分成 N 組，組內以流水號排列，組別以 A/B/C… 字母標示。
+    /// 範例：12 個檔案分成 3 組，前綴「Image」，起始 1，遞增 1，補零 2：
+    ///   第 0 組：Image01-A、Image02-A、Image03-A、Image04-A
+    ///   第 1 組：Image01-B、Image02-B、Image03-B、Image04-B
+    ///   第 2 組：Image01-C、Image02-C、Image03-C、Image04-C
+    /// 適合 AI 生成圖片時，同一組代表相同 Prompt 的不同變體，方便比對。
+    /// </summary>
     public class GroupRule : IRenameRule
     {
-        private GroupRuleControl _ruleControl;
-        private string _GroupFileName;
-        private int _startNumber;
-        private int _incNumber;
-        private int _padding;
-        private int _groupAmount;
-        //private bool _isExpanded;
-        //private bool _isEnabled;
-        private string[] _originalFileNamesWithoutExt;
-        private string[] _originalFileExtNames;
+        private readonly GroupRuleControl _ruleControl;
+
+        // 從控制項讀取到的最新參數快取
+        private string _prefix      = string.Empty;  // 檔名前綴文字
+        private int    _startNumber;                 // 組內流水號起始值
+        private int    _incNumber;                   // 組內流水號遞增量
+        private int    _padding;                     // 流水號補零位數
+        private int    _groupCount;                  // 群組數量
+
+        // 群組標籤字母（最多支援 25 組，跳過字母 N 避免與數字 0 混淆）
+        private static readonly string[] GroupLabels =
+        {
+            "A","B","C","D","E","F","G","H","I","J","K","L","M",
+            "O","P","Q","R","S","T","U","V","W","X","Y","Z"
+        };
 
         public GroupRule(GroupRuleControl ruleControl)
         {
             _ruleControl = ruleControl;
-            _GroupFileName = _ruleControl.GroupFileNameTextBox.Text;
-            _startNumber = (int)_ruleControl.startNumberNumericUpDown.Value;
-            _incNumber = (int)_ruleControl.incNumberNumericUpDown.Value;
-            _padding = (int)_ruleControl.paddingNumericUpDown.Value;
-            _groupAmount = (int)_ruleControl.groupAmountUpDown.Value;
+            UpdateParameters();
         }
-        public string RuleName
-        {
-            get { return "GroupRule"; }
-        }
-        /*
-       public bool IsExpanded
-       {
-           get => _isExpanded;
-           set => _isExpanded = value;
-       }
-       public  bool IsEnabled
-       {
-           get => _isEnabled;
-           set => _isEnabled = value;
-       } 
-       */
+
+        /// <summary>規則識別名稱</summary>
+        public string RuleName => "GroupRule";
+
+        /// <summary>從 UI 控制項重新讀取所有參數</summary>
         public void UpdateParameters()
         {
-            _GroupFileName = _ruleControl.GroupFileNameTextBox.Text;
+            _prefix      = _ruleControl.GroupFileNameTextBox.Text;
             _startNumber = (int)_ruleControl.startNumberNumericUpDown.Value;
-            _incNumber = (int)_ruleControl.incNumberNumericUpDown.Value;
-            _padding = (int)_ruleControl.paddingNumericUpDown.Value;
-            _groupAmount = (int)_ruleControl.groupAmountUpDown.Value;
-            //Debug.WriteLine("UpdateParameters: " + _GroupFileName + " " + _startNumber + " " + _padding);
+            _incNumber   = (int)_ruleControl.incNumberNumericUpDown.Value;
+            _padding     = (int)_ruleControl.paddingNumericUpDown.Value;
+            _groupCount  = (int)_ruleControl.groupAmountUpDown.Value;
+            Debug.WriteLine($"GroupRule.UpdateParameters: 前綴='{_prefix}' 群組數={_groupCount}");
         }
-        //原本規劃按下確認，後來沒使用，改成GenerateFileName()
-        public string[] Apply(string[] fileNames)
-        {
-            return GenerateFileName(fileNames);
-        }
-        // 
 
+        /// <summary>套用規則（委派給 GenerateFileName）</summary>
+        public string[] Apply(string[] fileNames) => GenerateFileName(fileNames);
+
+        /// <summary>
+        /// 核心邏輯：將 N 個檔案平均分成 _groupCount 組，
+        /// 每個檔案的新檔名格式為「前綴 + 組內流水號 + "-" + 組別字母 + 副檔名」。
+        /// </summary>
         public string[] GenerateFileName(string[] originalFileNames)
         {
-            string[] newFileNames = new string[originalFileNames.Length];
-            string[] groupName = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
-            float tmpFloat = (newFileNames.Length / _groupAmount); //避免整數除整數得到整數，先轉成浮點數
-            int howManyFilesInOneGroup = (int)Math.Ceiling(tmpFloat); //主要是Math.Ceiling()可帶入整數與浮點數，不確認會報錯
+            var newFileNames = new string[originalFileNames.Length];
+
+            // 計算每組應有幾個檔案（無條件進位，確保所有檔案都被涵蓋）
+            int filesPerGroup = (int)Math.Ceiling((double)originalFileNames.Length / _groupCount);
+
             for (int i = 0; i < originalFileNames.Length; i++)
             {
-                string originalFileNameWithoutExt = Path.GetFileNameWithoutExtension(originalFileNames[i]);
-                string originalFileExtName = Path.GetExtension(originalFileNames[i]);
-                Debug.WriteLine("_groupAmount = " + _groupAmount);
-                newFileNames[i] = $"{_GroupFileName}{(_startNumber + ((i % howManyFilesInOneGroup) * _incNumber)).ToString().PadLeft(_padding, '0')}{"-"}{groupName[(int)((i) / howManyFilesInOneGroup)]}{originalFileExtName}";
+                string ext = Path.GetExtension(originalFileNames[i]);
+
+                // 組內的排名（決定流水號）
+                int posInGroup = i % filesPerGroup;
+                // 所在群組的索引（決定字母標籤）
+                int groupIdx = i / filesPerGroup;
+
+                string number = (_startNumber + posInGroup * _incNumber).ToString().PadLeft(_padding, '0');
+                string label  = groupIdx < GroupLabels.Length ? GroupLabels[groupIdx] : groupIdx.ToString();
+
+                newFileNames[i] = $"{_prefix}{number}-{label}{ext}";
             }
             return newFileNames;
         }
 
-
-
-        public UserControl GetConfigControl()
-        {
-            return new GroupRuleControl();
-        }
+        /// <summary>回傳此規則的設定控制項</summary>
+        public UserControl GetConfigControl() => new GroupRuleControl();
     }
 }
