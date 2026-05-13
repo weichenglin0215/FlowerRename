@@ -1,4 +1,4 @@
-﻿namespace FlowerRename
+namespace FlowerRename
 {
     partial class Form_FlowerRename
     {
@@ -454,7 +454,7 @@
             Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStripAddRule;
             Name = "Form_FlowerRename";
-            Text = "開心花更名 V0.5.0(新增刪除功能、開啟選擇項目、狀態列、拖入多個目錄檔案功能、undo，修正清除項目錯誤)";
+            Text = "開心花更名 V0.6.0(新增刪除功能、開啟選擇項目、狀態列、拖入多個目錄檔案功能、undo，修正清除項目錯誤)";
             DragDrop += Form_FlowerRename_DragDrop;
             DragEnter += Form_FlowerRename_DragEnter;
             ruleContainer.ResumeLayout(false);
